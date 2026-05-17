@@ -107,17 +107,14 @@ nav{display:flex;align-items:center;gap:6px;}
 .hero p{font-size:1rem;color:var(--beige-soft);opacity:0.85;max-width:480px;margin:0 auto;}
 
 /* ══ TABS + SEARCH ══ */
-.tabs-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;background:var(--white);padding:16px 24px;border-bottom:1px solid rgba(123,63,196,0.12);position:sticky;top:68px;z-index:80;box-shadow:0 2px 20px rgba(45,10,78,0.06);}
+.tabs-wrap{display:flex;align-items:center;justify-content:center;background:var(--white);padding:14px 24px;border-bottom:1px solid rgba(123,63,196,0.12);position:sticky;top:68px;z-index:80;box-shadow:0 2px 20px rgba(45,10,78,0.06);}
 .tabs-wrap.hidden{display:none;}
 .search-bar-wrap{position:relative;width:100%;max-width:440px;}
 .search-bar-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--violet);pointer-events:none;}
 .search-bar{width:100%;padding:10px 16px 10px 42px;border:1.5px solid #E8DDF5;border-radius:40px;font-family:'DM Sans',sans-serif;font-size:0.88rem;color:var(--text);background:var(--blush);outline:none;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;}
 .search-bar:focus{border-color:var(--violet);background:var(--white);box-shadow:0 0 0 3px rgba(123,63,196,0.12);}
 .search-bar::placeholder{color:var(--lavender);}
-.tabs-row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;}
-.tab{background:none;border:1.5px solid transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:9px 26px;border-radius:40px;transition:all 0.2s;}
-.tab:hover{border-color:var(--lavender);color:var(--royal);}
-.tab.active{background:var(--royal);color:var(--white);border-color:var(--royal);box-shadow:0 4px 16px rgba(75,26,140,0.3);}
+
 
 /* ══ VIEWS ══ */
 .view{display:none;padding:40px 24px 80px;max-width:1180px;margin:0 auto;}
@@ -339,7 +336,7 @@ nav{display:flex;align-items:center;gap:6px;}
     </svg>
     <input class="search-bar" id="searchInput" type="text" placeholder="Search gifts…" oninput="filterProducts()">
   </div>
-  <div class="tabs-row" id="catTabs"></div>
+
 </div>
 <div class="results-meta" id="resultsMeta"></div>
 
