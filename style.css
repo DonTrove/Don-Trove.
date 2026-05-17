@@ -114,67 +114,16 @@ nav {
 }
 .cart-badge.show { display: flex; }
 
-/* ══ HERO ══ */
-.hero {
-  padding-top: 68px;
-  min-height: 340px;
-  background: linear-gradient(135deg, var(--plum) 0%, var(--royal) 55%, #6B2FA0 100%);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  text-align: center;
-  padding-bottom: 48px;
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 120%, rgba(201, 168, 76, 0.15) 0%, transparent 70%);
-}
-
-.hero-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.35;
-}
-.hero-orb-1 { width: 320px; height: 320px; background: var(--violet); top: -80px; left: -60px; }
-.hero-orb-2 { width: 240px; height: 240px; background: var(--gold); bottom: -60px; right: -40px; }
-
-.hero-content { position: relative; z-index: 2; }
-
-.hero-tag {
-  display: inline-block;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  padding: 5px 18px;
-  border-radius: 40px;
-  margin-bottom: 18px;
-}
-.hero h1 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 300;
-  font-size: clamp(2.4rem, 6vw, 4rem);
-  color: var(--white);
-  line-height: 1.1;
-  letter-spacing: 0.04em;
-  margin-bottom: 14px;
-}
-.hero h1 em { color: var(--gold-light); font-style: italic; }
-.hero p {
-  color: var(--lavender);
-  font-size: 1rem;
-  font-weight: 300;
-  max-width: 460px;
-  line-height: 1.6;
-  margin: 0 auto;
-}
+<!-- Hero section — replace whatever you have with this -->
+<section class="hero">
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-content">
+    <div class="hero-tag">✦ Curated With Love</div>
+    <h1>Le Tresor De <em>Misfah.</em></h1>
+    <p>Each gift is carefully selected to delight the ones you love</p>
+  </div>
+</section>
 
 /* ══ TABS + SEARCH TOOLBAR ══ */
 .tabs-wrap {
