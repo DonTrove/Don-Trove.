@@ -7,36 +7,34 @@
  * 1. Go to https://script.google.com and create a new project.
  * 2. Paste this entire file into the editor.
  * 3. Update SPREADSHEET_ID below with your Google Sheet ID.
+ *    (The ID is in the sheet URL: docs.google.com/spreadsheets/d/THIS_PART/edit)
  * 4. Deploy → New deployment → Web app
  *    - Execute as: Me
  *    - Who has access: Anyone
- * 5. Copy the deployment URL and paste it into js/app.js → CONFIG.SHEET_URL
+ * 5. Copy the deployment URL and paste it into index.html → CONFIG.SHEET_URL
  *
- * SHEET STRUCTURE:
- * The script auto-creates two sheets on first run:
- *   - "Products"  → Name | Price | Description | Image URL | Category | Active
- *   - "Orders"    → All order fields
+ * PRODUCTS SHEET COLUMNS (row 1 = headers):
+ *   A: Name  |  B: Price  |  C: Description  |  D: Image URL  |  E: Category  |  F: Active (YES/NO)
+ *
+ * ORDERS SHEET: auto-created on first order.
  */
 
-// ── CONFIG ─────────────────────────────────────────────
 const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; // ← Replace this!
 const PRODUCTS_SHEET = 'Products';
 const ORDERS_SHEET   = 'Orders';
-// ───────────────────────────────────────────────────────
 
 function getSpreadsheet() {
   return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
 // ══ GET — returns active products as JSON ══════════════
-// Columns: Name(0) | Price(1) | Description(2) | Image URL(3) | Category(4) | Active(5)
 function doGet(e) {
   try {
-    const ss    = getSpreadsheet();
-    let sheet   = ss.getSheetByName(PRODUCTS_SHEET);
+    const ss  = getSpreadsheet();
+    let sheet = ss.getSheetByName(PRODUCTS_SHEET);
 
-    // Auto-create Products sheet with headers if missing
     if (!sheet) {
+      // Auto-create with headers if missing
       sheet = ss.insertSheet(PRODUCTS_SHEET);
       sheet.appendRow(['Name', 'Price', 'Description', 'Image URL', 'Category', 'Active']);
       sheet.setFrozenRows(1);
@@ -44,23 +42,23 @@ function doGet(e) {
     }
 
     const data = sheet.getDataRange().getValues();
+    if (data.length < 2) return jsonResponse([]);
 
-    // Support both old layout (5 cols, Active at index 4)
-    // and new layout (6 cols, Category at index 4, Active at index 5)
+    // Detect column layout (supports 5-col legacy and 6-col with Category)
     const hasCategory = data[0].length >= 6;
 
     const products = data
-      .slice(1)
+      .slice(1) // skip header row
       .filter(row => {
         const activeVal = hasCategory ? row[5] : row[4];
-        return String(activeVal).toUpperCase() === 'YES' && row[0];
+        return String(activeVal).toUpperCase().trim() === 'YES' && String(row[0]).trim();
       })
       .map(row => ({
-        name:        row[0],
-        price:       row[1],
-        description: row[2],
-        imageUrl:    row[3],
-        category:    hasCategory ? String(row[4]).trim() : '',
+        name:        String(row[0]).trim(),
+        price:       Number(row[1]) || 0,
+        description: String(row[2] || '').trim(),
+        imageUrl:    String(row[3] || '').trim(),
+        category:    hasCategory ? String(row[4] || '').trim() : '',
       }));
 
     return jsonResponse(products);
@@ -76,35 +74,36 @@ function doPost(e) {
     const ss      = getSpreadsheet();
     let sheet     = ss.getSheetByName(ORDERS_SHEET);
 
-    // Auto-create Orders sheet with headers if missing
     if (!sheet) {
       sheet = ss.insertSheet(ORDERS_SHEET);
       sheet.appendRow([
-        'Order Ref', 'Date/Time', 'Sender Name', 'Phone', 'Email',
+        'Order Ref', 'Date/Time', 'Sender Name', 'Phone', 'Email', 'City',
         'Recipient Name', 'Delivery Address', 'Delivery Date', 'Occasion',
-        'Gift Message', 'Items', 'Subtotal (PKR)', 'Gift Wrap',
-        'Delivery Fee (PKR)', 'Total (PKR)', 'Payment Method',
+        'Gift Message', 'Special Notes', 'Items',
+        'Subtotal (PKR)', 'Gift Wrap', 'Delivery Fee (PKR)', 'Total (PKR)', 'Payment Method',
       ]);
       sheet.setFrozenRows(1);
     }
 
     sheet.appendRow([
-      payload.orderRef,
-      payload.dateTime,
-      payload.senderName,
-      payload.phone,
-      payload.email,
-      payload.recipientName,
-      payload.address,
-      payload.deliveryDate,
-      payload.occasion,
-      payload.giftMessage,
-      payload.items,
-      payload.subtotal,
-      payload.giftWrap,
-      payload.deliveryFee,
-      payload.total,
-      payload.paymentMethod,
+      payload.orderRef      || '',
+      payload.dateTime      || '',
+      payload.senderName    || '',
+      payload.phone         || '',
+      payload.email         || '',
+      payload.city          || '',
+      payload.recipientName || '',
+      payload.address       || '',
+      payload.deliveryDate  || '',
+      payload.occasion      || '',
+      payload.giftMessage   || '',
+      payload.notes         || '',
+      payload.items         || '',
+      payload.subtotal      || 0,
+      payload.giftWrap      || 'No',
+      payload.deliveryFee   || 200,
+      payload.total         || 0,
+      payload.paymentMethod || '',
     ]);
 
     return jsonResponse({ success: true, orderRef: payload.orderRef });
@@ -115,7 +114,8 @@ function doPost(e) {
 
 // ══ Helper ════════════════════════════════════════════
 function jsonResponse(data) {
-  return ContentService
+  const output = ContentService
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+  return output;
 }
