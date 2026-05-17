@@ -19,7 +19,7 @@
  * ORDERS SHEET: auto-created on first order.
  */
 
-const SPREADSHEET_ID = 'https://script.google.com/macros/s/AKfycbwOMervnMYiwxPUNkqqOvRwnwfxvmxzYhEk2wcQyLAF_5D7rv153KsS2UiruaC3_11N3Q/exec'; // ← Replace this!
+const SPREADSHEET_ID = '1aBcDeFgHiJkLmNoPqRsTuVwXyZ '; // ← Replace this!
 const PRODUCTS_SHEET = 'Products';
 const ORDERS_SHEET   = 'Orders';
 
