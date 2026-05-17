@@ -1,44 +1,75 @@
 /**
  * Don Trove — Curated Gifts
  * app.js — Main application logic
- *
- * Depends on: Google Apps Script web app (SHEET_URL)
- * Sheet columns: Name | Price | Description | Image URL | Active (YES/NO)
  */
 
 'use strict';
 
 // ══════════════════════════════════════════
-//  CONFIG — update SHEET_URL with your own
-//  Google Apps Script deployment URL
+//  CONFIG
 // ══════════════════════════════════════════
 const CONFIG = {
-  SHEET_URL:    'https://script.google.com/macros/s/AKfycbz9T5BOg4uZiehgMfwvxCrAi4r1ErRmIufnD1o5TW1kf4pDhpzKjDunjbfiCJAbr7buQQ/exec',
-  DELIVERY_FEE: 200,
+  SHEET_URL:     'https://script.google.com/macros/s/AKfycbz9T5BOg4uZiehgMfwvxCrAi4r1ErRmIufnD1o5TW1kf4pDhpzKjDunjbfiCJAbr7buQQ/exec',
+  DELIVERY_FEE:  200,
   GIFT_WRAP_FEE: 300,
 };
 
 // ── State ──
-let products = [];
-let cart = [];
+let products        = [];
+let cart            = [];
 let selectedPayment = 'Cash on Delivery';
+let activeCategory  = 'All';
+
+// Category emoji map — add your own categories here
+const CAT_EMOJI = {
+  'All':        '🎁',
+  'Planners':   '📓',
+  'Notebooks':  '📔',
+  'Stationery': '✏️',
+  'Skincare':   '🧴',
+  'Candles':    '🕯️',
+  'Jewellery':  '💍',
+  'Accessories':'👜',
+  'Books':      '📚',
+  'Other':      '✨',
+};
+
+const CAT_COLORS = [
+  'linear-gradient(135deg,#F3EBF9,#E8D8F5)',
+  'linear-gradient(135deg,#E8F4FF,#D0E8FF)',
+  'linear-gradient(135deg,#FFF3E0,#FFE0B2)',
+  'linear-gradient(135deg,#E8F5E9,#C8E6C9)',
+  'linear-gradient(135deg,#FCE4EC,#F8BBD0)',
+  'linear-gradient(135deg,#F3E5F5,#E1BEE7)',
+  'linear-gradient(135deg,#E0F7FA,#B2EBF2)',
+  'linear-gradient(135deg,#FFFDE7,#FFF9C4)',
+];
 
 // ══════════════════════════════════════════
 //  VIEW NAVIGATION
 // ══════════════════════════════════════════
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-btn:not(.cart-btn)').forEach(b => b.classList.remove('active'));
 
-  document.getElementById('view-' + name).classList.add('active');
+  const view = document.getElementById('view-' + name);
+  if (view) view.classList.add('active');
 
-  const tab = document.querySelector(`.tab[data-view="${name}"]`);
-  if (tab) tab.classList.add('active');
+  // Show search/tabs only on shop view
+  const tabsWrap = document.getElementById('tabsWrap');
+  if (tabsWrap) tabsWrap.classList.toggle('hidden', name !== 'shop');
 
-  if (name === 'cart')     renderCart();
-  if (name === 'checkout') renderCheckoutSummary();
-  if (name === 'manage')   renderManage();
+  // Highlight active nav button
+  document.querySelectorAll('.nav-btn:not(.cart-btn)').forEach(b => {
+    const onclick = b.getAttribute('onclick') || '';
+    if (onclick.includes(`'${name}'`)) b.classList.add('active');
+  });
+
+  if (name === 'cart')               renderCart();
+  if (name === 'checkout')           renderCheckoutSummary();
+  if (name === 'manage')             renderManage();
+  if (name === 'categories')         renderCategories();
+  if (name === 'category-products')  { /* rendered before calling showView */ }
 }
 
 // ══════════════════════════════════════════
@@ -46,9 +77,11 @@ function showView(name) {
 // ══════════════════════════════════════════
 async function loadProducts() {
   try {
-    const res = await fetch(CONFIG.SHEET_URL);
-    products = await res.json();
-    renderProducts();
+    const res = await fetch(CONFIG.SHEET_URL + '?action=products');
+    const data = await res.json();
+    products = Array.isArray(data) ? data : (data.products || []);
+    renderProducts(products);
+    buildCategoryTabs();
   } catch (err) {
     console.error('Failed to load products:', err);
     document.getElementById('productsGrid').innerHTML =
@@ -56,15 +89,134 @@ async function loadProducts() {
   }
 }
 
-function renderProducts() {
-  const grid = document.getElementById('productsGrid');
+// ══════════════════════════════════════════
+//  CATEGORY TABS (in shop view)
+// ══════════════════════════════════════════
+function buildCategoryTabs() {
+  const cats = ['All', ...new Set(products.map(p => p.category || 'Other').filter(Boolean))];
+  const row  = document.getElementById('catTabs');
+  if (!row) return;
 
-  if (!products.length) {
-    grid.innerHTML = `<div class="loading-wrap"><p>No products available yet.</p></div>`;
+  row.innerHTML = cats.map(c => `
+    <button class="tab ${c === 'All' ? 'active' : ''}"
+      onclick="filterByCategory('${c}', this)">${c}</button>
+  `).join('');
+}
+
+function filterByCategory(cat, el) {
+  activeCategory = cat;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  applyFilters(cat, q);
+}
+
+function filterProducts() {
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  applyFilters(activeCategory, q);
+}
+
+function applyFilters(cat, q) {
+  let filtered = products;
+  if (cat && cat !== 'All') {
+    filtered = filtered.filter(p => (p.category || 'Other') === cat);
+  }
+  if (q) {
+    filtered = filtered.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q)
+    );
+  }
+  renderProducts(filtered);
+}
+
+// ══════════════════════════════════════════
+//  RENDER PRODUCTS (shop grid)
+// ══════════════════════════════════════════
+function renderProducts(list) {
+  const grid = document.getElementById('productsGrid');
+  if (!grid) return;
+
+  if (!list || !list.length) {
+    grid.innerHTML = `<div class="loading-wrap"><p>No products found.</p></div>`;
     return;
   }
 
-  grid.innerHTML = products.map((p, i) => `
+  grid.innerHTML = list.map((p, i) => {
+    const idx = products.indexOf(p);
+    return `
+    <div class="product-card" style="animation-delay:${i * 0.06}s">
+      <div class="product-img-wrap">
+        ${p.imageUrl
+          ? `<img src="${p.imageUrl}" alt="${escapeHtml(p.name)}" loading="lazy"
+               onerror="this.parentElement.innerHTML='<div class=product-img-placeholder>🎁</div>'">`
+          : `<div class="product-img-placeholder">🎁</div>`}
+      </div>
+      <div class="product-body">
+        <div class="product-name">${escapeHtml(p.name)}</div>
+        ${p.category ? `<div class="product-cat-tag">${escapeHtml(p.category)}</div>` : ''}
+        <div class="product-desc">${escapeHtml(p.description || 'A beautiful curated gift.')}</div>
+        <div class="product-footer">
+          <div class="product-price">PKR ${Number(p.price).toLocaleString()}</div>
+          <button class="add-btn" onclick="addToCart(${idx})">+ Add</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+//  CATEGORIES PAGE
+// ══════════════════════════════════════════
+function renderCategories() {
+  const grid = document.getElementById('categoriesGrid');
+  if (!grid) return;
+
+  if (!products.length) {
+    grid.innerHTML = `<div class="loading-wrap"><div class="spinner"></div><p>Loading categories…</p></div>`;
+    return;
+  }
+
+  // Group products by category
+  const catMap = {};
+  products.forEach(p => {
+    const cat = p.category || 'Other';
+    if (!catMap[cat]) catMap[cat] = [];
+    catMap[cat].push(p);
+  });
+
+  const cats = Object.keys(catMap);
+
+  grid.innerHTML = cats.map((cat, i) => {
+    const count = catMap[cat].length;
+    const emoji = CAT_EMOJI[cat] || '🎁';
+    const bg    = CAT_COLORS[i % CAT_COLORS.length];
+    return `
+    <div class="category-card" style="animation-delay:${i * 0.07}s" onclick="openCategory('${escapeHtml(cat)}')">
+      <div class="category-card-banner" style="background:${bg}">
+        ${emoji}
+      </div>
+      <div class="category-card-body">
+        <div class="category-card-name">${escapeHtml(cat)}</div>
+        <div class="category-card-count">${count} gift${count !== 1 ? 's' : ''}</div>
+        <div class="category-card-arrow">Shop now →</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCategory(cat) {
+  const catProducts = products.filter(p => (p.category || 'Other') === cat);
+
+  document.getElementById('catProductsTitle').textContent = cat;
+  document.getElementById('catProductsSub').textContent =
+    `${catProducts.length} gift${catProducts.length !== 1 ? 's' : ''} in this collection`;
+
+  const grid = document.getElementById('catProductsGrid');
+  grid.innerHTML = catProducts.map((p, i) => {
+    const idx = products.indexOf(p);
+    return `
     <div class="product-card" style="animation-delay:${i * 0.06}s">
       <div class="product-img-wrap">
         ${p.imageUrl
@@ -77,11 +229,13 @@ function renderProducts() {
         <div class="product-desc">${escapeHtml(p.description || 'A beautiful curated gift.')}</div>
         <div class="product-footer">
           <div class="product-price">PKR ${Number(p.price).toLocaleString()}</div>
-          <button class="add-btn" onclick="addToCart(${i})">+ Add</button>
+          <button class="add-btn" onclick="addToCart(${idx})">+ Add</button>
         </div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+
+  showView('category-products');
 }
 
 // ══════════════════════════════════════════
@@ -90,13 +244,11 @@ function renderProducts() {
 function addToCart(idx) {
   const p = products[idx];
   const existing = cart.find(c => c.name === p.name);
-
   if (existing) {
     existing.qty++;
   } else {
     cart.push({ name: p.name, price: Number(p.price), imageUrl: p.imageUrl, qty: 1 });
   }
-
   updateBadge();
   showToast(`✦ ${p.name} added to cart`);
 }
@@ -109,10 +261,7 @@ function removeFromCart(idx) {
 
 function changeQty(idx, delta) {
   cart[idx].qty += delta;
-  if (cart[idx].qty < 1) {
-    removeFromCart(idx);
-    return;
-  }
+  if (cart[idx].qty < 1) { removeFromCart(idx); return; }
   updateBadge();
   renderCart();
 }
@@ -122,7 +271,8 @@ function updateBadge() {
   const badge = document.getElementById('cartBadge');
   badge.textContent = total;
   badge.classList.toggle('show', total > 0);
-  document.getElementById('proceedBtn').disabled = total === 0;
+  const btn = document.getElementById('proceedBtn');
+  if (btn) btn.disabled = total === 0;
 }
 
 function getSubtotal() {
@@ -137,13 +287,13 @@ function updateSummary() {
   const sub   = getSubtotal();
   const wrap  = giftWrapCost();
   const total = sub + wrap + CONFIG.DELIVERY_FEE;
-
   document.getElementById('summSubtotal').textContent = 'PKR ' + sub.toLocaleString();
   document.getElementById('summTotal').textContent    = 'PKR ' + total.toLocaleString();
 }
 
 function renderCart() {
   const list = document.getElementById('cartItemsList');
+  if (!list) return;
 
   if (!cart.length) {
     list.innerHTML = `
@@ -167,15 +317,15 @@ function renderCart() {
         <div class="cart-item-name">${escapeHtml(item.name)}</div>
         <div class="cart-item-price">PKR ${item.price.toLocaleString()} each</div>
         <div class="qty-ctrl">
-          <button class="qty-btn" onclick="changeQty(${i}, -1)" aria-label="Decrease quantity">−</button>
+          <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
           <span class="qty-num">${item.qty}</span>
-          <button class="qty-btn" onclick="changeQty(${i}, 1)" aria-label="Increase quantity">+</button>
+          <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
           <span style="margin-left:6px;font-weight:600;font-size:.9rem;color:var(--royal)">
             PKR ${(item.price * item.qty).toLocaleString()}
           </span>
         </div>
       </div>
-      <button class="remove-btn" onclick="removeFromCart(${i})" title="Remove item" aria-label="Remove ${escapeHtml(item.name)}">🗑</button>
+      <button class="remove-btn" onclick="removeFromCart(${i})" title="Remove">🗑</button>
     </div>
   `).join('');
 
@@ -184,17 +334,15 @@ function renderCart() {
 
 function proceedToCheckout() {
   if (!cart.length) return;
-
-  document.getElementById('checkoutTab').style.display = 'block';
   showView('checkout');
-
-  // Set minimum delivery date to today
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('deliveryDate').min = today;
+  const dd = document.getElementById('deliveryDate');
+  if (dd) dd.min = today;
 }
 
 function renderCheckoutSummary() {
   const list = document.getElementById('checkoutItemsList');
+  if (!list) return;
 
   list.innerHTML = cart.map(item => `
     <div class="checkout-item-row">
@@ -208,7 +356,6 @@ function renderCheckoutSummary() {
 
   const sub  = getSubtotal();
   const wrap = giftWrapCost();
-
   document.getElementById('co-subtotal').textContent = 'PKR ' + sub.toLocaleString();
   document.getElementById('co-wrap').textContent     = wrap ? `PKR ${wrap}` : '—';
   document.getElementById('co-total').textContent    = 'PKR ' + (sub + wrap + CONFIG.DELIVERY_FEE).toLocaleString();
@@ -227,26 +374,31 @@ function selectPayment(el, method) {
 //  PLACE ORDER
 // ══════════════════════════════════════════
 async function placeOrder() {
+  const val = id => document.getElementById(id)?.value.trim() || '';
+
   const fields = {
-    senderName:    document.getElementById('senderName').value.trim(),
-    phone:         document.getElementById('phone').value.trim(),
-    email:         document.getElementById('email').value.trim(),
-    recipientName: document.getElementById('recipientName').value.trim(),
-    address:       document.getElementById('address').value.trim(),
-    deliveryDate:  document.getElementById('deliveryDate').value,
-    occasion:      document.getElementById('occasion').value,
-    giftMessage:   document.getElementById('giftMessage').value.trim(),
+    senderName:    val('senderName'),
+    phone:         val('phone'),
+    email:         val('email'),
+    city:          val('city'),
+    recipientName: val('recipientName'),
+    occasion:      val('occasion'),
+    address:       val('address'),
+    deliveryDate:  val('deliveryDate'),
+    giftMessage:   val('giftMessage'),
+    notes:         val('notes'),
   };
 
   // Validation
-  if (!fields.senderName || !fields.phone || !fields.recipientName || !fields.address) {
+  if (!fields.senderName || !fields.phone || !fields.city || !fields.recipientName || !fields.address) {
     showToast('⚠️ Please fill in all required fields');
     return;
   }
 
   const btn = document.getElementById('placeOrderBtn');
-  btn.disabled    = true;
-  btn.textContent = 'Placing order…';
+  btn.classList.add('submitting');
+  btn.textContent = '⏳ Placing order…';
+  btn.disabled = true;
 
   const sub      = getSubtotal();
   const wrap     = giftWrapCost();
@@ -256,6 +408,7 @@ async function placeOrder() {
   const itemsSummary = cart.map(c => `${c.name} x${c.qty}`).join(', ');
 
   const payload = {
+    action:        'order',
     orderRef,
     dateTime,
     ...fields,
@@ -268,18 +421,18 @@ async function placeOrder() {
   };
 
   try {
-    // Apps Script POST — response may be blocked by CORS; order still goes through
     await fetch(CONFIG.SHEET_URL, {
       method: 'POST',
+      mode:   'no-cors',
+      headers: { 'Content-Type': 'application/json' },
       body:   JSON.stringify(payload),
     });
   } catch (err) {
-    // Silent catch: CORS on Apps Script no-cors requests is expected
-    console.warn('POST response not readable (CORS). Order should still be recorded.', err);
+    // no-cors: response is opaque, this is expected
+    console.warn('POST sent (no-cors). Order recorded in sheet.', err);
   }
 
   document.getElementById('successRef').textContent = orderRef;
-  document.getElementById('checkoutTab').style.display = 'none';
   showView('success');
 }
 
@@ -288,29 +441,32 @@ async function placeOrder() {
 // ══════════════════════════════════════════
 function resetAll() {
   cart = [];
+  activeCategory = 'All';
   updateBadge();
 
   const wrap = document.getElementById('giftWrapCheck');
   if (wrap) wrap.checked = false;
 
-  const textFields = ['senderName', 'phone', 'email', 'recipientName', 'address', 'deliveryDate', 'giftMessage'];
-  textFields.forEach(id => {
+  ['senderName','phone','email','city','recipientName','address',
+   'deliveryDate','giftMessage','notes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
 
-  const occasion = document.getElementById('occasion');
-  if (occasion) occasion.value = '';
+  ['occasion','city'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
 
   document.querySelectorAll('.payment-opt').forEach((o, i) => {
     o.classList.toggle('selected', i === 0);
   });
   selectedPayment = 'Cash on Delivery';
 
-  // Reset place order button
   const btn = document.getElementById('placeOrderBtn');
   if (btn) {
-    btn.disabled    = false;
+    btn.disabled = false;
+    btn.classList.remove('submitting');
     btn.textContent = '✦ Confirm & Place Order';
   }
 
@@ -322,6 +478,7 @@ function resetAll() {
 // ══════════════════════════════════════════
 function renderManage() {
   const list = document.getElementById('manageList');
+  if (!list) return;
 
   if (!products.length) {
     list.innerHTML = `<div class="loading-wrap"><p>No products loaded.</p></div>`;
@@ -337,15 +494,18 @@ function renderManage() {
       </div>
       <div class="manage-info-col">
         <div class="manage-prod-name">${escapeHtml(p.name)}</div>
-        <div class="manage-prod-price">PKR ${Number(p.price).toLocaleString()}</div>
+        <div class="manage-prod-price">PKR ${Number(p.price).toLocaleString()}
+          ${p.category ? ` · ${escapeHtml(p.category)}` : ''}</div>
       </div>
-      <span class="manage-badge badge-active">Active</span>
+      <span class="manage-badge ${p.active === 'NO' ? 'badge-inactive' : 'badge-active'}">
+        ${p.active === 'NO' ? 'Inactive' : 'Active'}
+      </span>
     </div>
   `).join('');
 }
 
 // ══════════════════════════════════════════
-//  TOAST NOTIFICATIONS
+//  TOAST
 // ══════════════════════════════════════════
 let toastTimer;
 function showToast(msg) {
@@ -362,16 +522,14 @@ function showToast(msg) {
 function escapeHtml(str) {
   if (!str) return '';
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
 
 // ══════════════════════════════════════════
-//  SECRET ADMIN ACCESS
-//  Navigate to: index.html#manage-dt-admin
+//  ADMIN SECRET ACCESS
+//  Go to: index.html#manage-dt-admin
 // ══════════════════════════════════════════
 if (location.hash === '#manage-dt-admin') {
   window.addEventListener('load', () => showView('manage'));
