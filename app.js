@@ -13,7 +13,7 @@
 //  Google Apps Script deployment URL
 // ══════════════════════════════════════════
 const CONFIG = {
-  SHEET_URL:    'https://script.google.com/macros/s/AKfycbxIrp1uGhv5YbVUItLlrFKA-nKPN8QTbCm3QLmrGYswb8Ys2SEIaWI5o6WFY0XtSxMxUA/exec',
+  SHEET_URL:    'https://script.google.com/macros/s/AKfycbz9T5BOg4uZiehgMfwvxCrAi4r1ErRmIufnD1o5TW1kf4pDhpzKjDunjbfiCJAbr7buQQ/exec',
   DELIVERY_FEE: 200,
   GIFT_WRAP_FEE: 300,
 };
