@@ -29,10 +29,23 @@
 html{scroll-behavior:smooth;}
 body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-/* HEADER */
-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(45,10,78,0.97);backdrop-filter:blur(18px);border-bottom:1px solid rgba(196,168,232,0.18);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:68px;}
+/* ══ HEADER ══ */
+header{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(45,10,78,0.97);backdrop-filter:blur(18px);border-bottom:1px solid rgba(196,168,232,0.18);padding:0 24px 0 0;display:flex;align-items:center;justify-content:space-between;height:68px;}
+
+/* Left side: hamburger + brand */
+.header-left{display:flex;align-items:center;gap:0;}
+
+/* ── Hamburger button ── */
+.hamburger-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 20px;height:68px;width:64px;flex-shrink:0;transition:background 0.2s;}
+.hamburger-btn:hover{background:rgba(245,240,232,0.1);}
+.hamburger-btn span{display:block;width:22px;height:2px;background:var(--beige);border-radius:2px;transition:transform 0.32s cubic-bezier(0.4,0,0.2,1),opacity 0.2s;}
+.hamburger-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger-btn.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+.hamburger-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
 .brand{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;letter-spacing:0.18em;color:var(--beige);text-transform:uppercase;text-decoration:none;}
 .brand span{color:var(--beige-soft);font-style:italic;font-weight:400;}
+
 nav{display:flex;align-items:center;gap:6px;}
 .nav-btn{background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.78rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--beige);padding:8px 16px;border-radius:40px;transition:all 0.25s;}
 .nav-btn:hover,.nav-btn.active{background:rgba(245,240,232,0.15);color:var(--beige);}
@@ -41,7 +54,48 @@ nav{display:flex;align-items:center;gap:6px;}
 .cart-badge{position:absolute;top:-5px;right:-5px;background:var(--violet);color:#fff;border-radius:50%;width:19px;height:19px;font-size:0.68rem;font-weight:700;display:none;align-items:center;justify-content:center;}
 .cart-badge.show{display:flex;}
 
-/* HERO */
+/* ══ DRAWER OVERLAY ══ */
+.drawer-overlay{position:fixed;inset:0;top:68px;background:rgba(45,10,78,0.45);z-index:150;opacity:0;pointer-events:none;transition:opacity 0.35s;}
+.drawer-overlay.visible{opacity:1;pointer-events:all;}
+
+/* ══ SIDE DRAWER ══ */
+.categories-drawer{position:fixed;top:68px;left:0;bottom:0;width:300px;background:var(--white);z-index:160;transform:translateX(-100%);transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;box-shadow:4px 0 40px rgba(45,10,78,0.18);}
+.categories-drawer.open{transform:translateX(0);}
+
+.drawer-header{background:linear-gradient(135deg,var(--plum),var(--royal));padding:22px 24px 18px;}
+.drawer-header-label{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-light);margin-bottom:4px;}
+.drawer-header-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;color:var(--beige);letter-spacing:0.06em;}
+
+.drawer-section-label{font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);padding:18px 24px 6px;display:block;}
+
+.drawer-item{display:flex;align-items:center;justify-content:space-between;padding:11px 22px;cursor:pointer;transition:background 0.15s,border-left-color 0.15s;border-left:3px solid transparent;text-decoration:none;}
+.drawer-item:hover{background:var(--blush);border-left-color:var(--violet);}
+.drawer-item.active-cat{background:var(--blush);border-left-color:var(--royal);}
+
+.drawer-item-left{display:flex;align-items:center;gap:13px;}
+.drawer-item-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.drawer-item-text{}
+.drawer-item-name{font-size:0.92rem;font-weight:500;color:var(--plum);}
+.drawer-item-count{font-size:0.74rem;color:var(--muted);margin-top:1px;}
+.drawer-arrow{font-size:1rem;color:var(--lavender);}
+
+.drawer-divider{height:1px;background:rgba(123,63,196,0.1);margin:8px 20px;}
+
+.drawer-all-btn{display:flex;align-items:center;gap:13px;padding:14px 22px;cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;border-top:1px solid rgba(123,63,196,0.1);margin-top:4px;}
+.drawer-all-btn:hover{background:var(--blush);border-left-color:var(--violet);}
+.drawer-all-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--royal),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.drawer-all-name{font-size:0.92rem;font-weight:600;color:var(--royal);}
+
+/* Skeleton loading in drawer */
+.drawer-skeleton{padding:12px 22px;}
+.skel-item{display:flex;align-items:center;gap:13px;margin-bottom:12px;}
+.skel-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(90deg,#f0e8f8 25%,#e8d8f5 50%,#f0e8f8 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+.skel-text{flex:1;}
+.skel-line{height:10px;border-radius:6px;background:linear-gradient(90deg,#f0e8f8 25%,#e8d8f5 50%,#f0e8f8 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;margin-bottom:5px;}
+.skel-line.short{width:55%;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ══ HERO ══ */
 .hero{background:linear-gradient(135deg,var(--plum) 0%,var(--royal) 60%,var(--violet) 100%);position:relative;overflow:hidden;padding:140px 24px 90px;text-align:center;margin-top:68px;}
 .hero-orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:0.35;pointer-events:none;}
 .hero-orb-1{width:520px;height:520px;background:radial-gradient(circle,var(--violet),transparent 70%);top:-160px;left:-120px;}
@@ -52,7 +106,7 @@ nav{display:flex;align-items:center;gap:6px;}
 .hero h1 em{font-style:italic;color:var(--gold-light);}
 .hero p{font-size:1rem;color:var(--beige-soft);opacity:0.85;max-width:480px;margin:0 auto;}
 
-/* TABS + SEARCH */
+/* ══ TABS + SEARCH ══ */
 .tabs-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;background:var(--white);padding:16px 24px;border-bottom:1px solid rgba(123,63,196,0.12);position:sticky;top:68px;z-index:80;box-shadow:0 2px 20px rgba(45,10,78,0.06);}
 .tabs-wrap.hidden{display:none;}
 .search-bar-wrap{position:relative;width:100%;max-width:440px;}
@@ -65,13 +119,13 @@ nav{display:flex;align-items:center;gap:6px;}
 .tab:hover{border-color:var(--lavender);color:var(--royal);}
 .tab.active{background:var(--royal);color:var(--white);border-color:var(--royal);box-shadow:0 4px 16px rgba(75,26,140,0.3);}
 
-/* VIEWS */
+/* ══ VIEWS ══ */
 .view{display:none;padding:40px 24px 80px;max-width:1180px;margin:0 auto;}
 .view.active{display:block;}
 .section-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:400;color:var(--plum);text-align:center;margin-bottom:8px;letter-spacing:0.03em;}
 .section-sub{text-align:center;color:var(--muted);font-size:0.88rem;margin-bottom:36px;}
 
-/* CATEGORIES GRID */
+/* ══ CATEGORIES GRID ══ */
 .categories-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:24px;}
 .category-card{background:var(--white);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(123,63,196,0.08);cursor:pointer;transition:transform 0.3s,box-shadow 0.3s;animation:fadeUp 0.4s ease both;}
 .category-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);}
@@ -81,11 +135,11 @@ nav{display:flex;align-items:center;gap:6px;}
 .category-card-count{font-size:0.8rem;color:var(--muted);}
 .category-card-arrow{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:0.78rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--violet);}
 
-/* BACK LINK */
+/* ══ BACK LINK ══ */
 .back-link{display:inline-flex;align-items:center;gap:8px;font-size:0.82rem;font-weight:500;color:var(--violet);letter-spacing:0.08em;text-transform:uppercase;background:none;border:none;cursor:pointer;margin-bottom:28px;transition:0.2s;}
 .back-link:hover{color:var(--royal);}
 
-/* PRODUCT GRID */
+/* ══ PRODUCT GRID ══ */
 .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:28px;}
 .product-card{background:var(--white);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);transition:transform 0.3s,box-shadow 0.3s;cursor:pointer;border:1px solid rgba(123,63,196,0.08);animation:fadeUp 0.4s ease both;}
 .product-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);}
@@ -102,7 +156,7 @@ nav{display:flex;align-items:center;gap:6px;}
 .add-btn{background:linear-gradient(135deg,var(--royal),var(--violet));color:var(--white);border:none;cursor:pointer;padding:9px 20px;border-radius:30px;font-size:0.8rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.2s;box-shadow:0 3px 12px rgba(75,26,140,0.3);}
 .add-btn:hover{box-shadow:0 5px 20px rgba(75,26,140,0.45);transform:scale(1.04);}
 
-/* CART */
+/* ══ CART ══ */
 .cart-layout{display:grid;grid-template-columns:1fr 340px;gap:32px;}
 .cart-empty{text-align:center;padding:80px 20px;color:var(--muted);}
 .cart-empty .empty-icon{font-size:4rem;margin-bottom:16px;display:block;}
@@ -119,7 +173,7 @@ nav{display:flex;align-items:center;gap:6px;}
 .remove-btn{background:none;border:none;cursor:pointer;color:#C4A8E8;font-size:1.1rem;padding:4px;transition:0.2s;}
 .remove-btn:hover{color:#e74c3c;}
 
-/* ORDER SUMMARY */
+/* ══ ORDER SUMMARY ══ */
 .order-summary{background:var(--white);border-radius:18px;padding:26px;box-shadow:var(--shadow);border:1px solid rgba(123,63,196,0.08);position:sticky;top:138px;height:fit-content;}
 .summary-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--plum);margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--blush);}
 .summary-row{display:flex;justify-content:space-between;margin-bottom:10px;font-size:0.9rem;}
@@ -131,7 +185,7 @@ nav{display:flex;align-items:center;gap:6px;}
 .checkout-btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(45,10,78,0.45);}
 .checkout-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
 
-/* CHECKOUT / USER DETAILS */
+/* ══ CHECKOUT ══ */
 .checkout-steps{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:36px;}
 .step{display:flex;align-items:center;gap:10px;font-size:0.78rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
 .step.active{color:var(--royal);}
@@ -170,7 +224,7 @@ nav{display:flex;align-items:center;gap:6px;}
 .checkout-item-qty{color:var(--muted);font-size:0.78rem;}
 .checkout-item-price{font-weight:600;color:var(--royal);}
 
-/* SUCCESS */
+/* ══ SUCCESS ══ */
 .success-view{text-align:center;padding:80px 24px;}
 .success-icon{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--royal),var(--violet));margin:0 auto 28px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;box-shadow:0 8px 32px rgba(75,26,140,0.4);animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275);}
 .success-view h2{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:400;color:var(--plum);margin-bottom:12px;}
@@ -180,7 +234,7 @@ nav{display:flex;align-items:center;gap:6px;}
 .back-shop-btn{background:linear-gradient(135deg,var(--royal),var(--violet));color:#fff;border:none;padding:12px 36px;border-radius:40px;cursor:pointer;font-size:0.9rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;transition:0.2s;box-shadow:0 4px 18px rgba(75,26,140,0.35);}
 .back-shop-btn:hover{transform:translateY(-2px);}
 
-/* ADMIN */
+/* ══ ADMIN ══ */
 .manage-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
 .admin-label{font-size:0.75rem;color:var(--muted);}
 .manage-info-banner{background:linear-gradient(135deg,#FFF9E6,#FFF3CC);border:1px solid var(--gold);border-radius:12px;padding:14px 18px;font-size:0.85rem;color:#7A5A10;margin-bottom:24px;}
@@ -195,33 +249,41 @@ nav{display:flex;align-items:center;gap:6px;}
 .badge-active{background:#E6F9F0;color:#1A7A4A;}
 .badge-inactive{background:#FEF0F0;color:#C0392B;}
 
-/* TOAST */
+/* ══ TOAST ══ */
 .toast{position:fixed;bottom:28px;right:28px;z-index:999;background:var(--plum);color:#fff;padding:14px 22px;border-radius:14px;font-size:0.88rem;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transform:translateY(20px);transition:opacity 0.3s,transform 0.3s;border-left:3px solid var(--gold);}
 .toast.show{opacity:1;transform:translateY(0);}
 
-/* LOADING */
+/* ══ LOADING ══ */
 .loading-wrap{text-align:center;padding:80px 20px;color:var(--muted);}
 .spinner{width:44px;height:44px;border-radius:50%;border:3px solid var(--blush);border-top-color:var(--royal);animation:spin 1s linear infinite;margin:0 auto 16px;}
 .results-meta{display:none;}
 
-/* ANIMATIONS */
+/* ══ ANIMATIONS ══ */
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
 @keyframes popIn{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
 
-/* RESPONSIVE */
+/* ══ RESPONSIVE ══ */
 @media(max-width:860px){.cart-layout{grid-template-columns:1fr;}.checkout-grid{grid-template-columns:1fr;}}
-@media(max-width:640px){header{padding:0 16px;}.brand{font-size:1.4rem;}.nav-btn:not(.cart-btn){display:none;}.view{padding:28px 14px 80px;}.payment-options{grid-template-columns:1fr;}.search-bar-wrap{max-width:100%;}.tabs-wrap{padding:12px 14px;gap:10px;}.categories-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}}
+@media(max-width:640px){header{padding:0 12px 0 0;}.brand{font-size:1.35rem;}.nav-btn:not(.cart-btn){display:none;}.view{padding:28px 14px 80px;}.payment-options{grid-template-columns:1fr;}.search-bar-wrap{max-width:100%;}.tabs-wrap{padding:12px 14px;gap:10px;}.categories-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}.categories-drawer{width:280px;}}
 @media(max-width:560px){.form-row{grid-template-columns:1fr;}.checkout-steps .step span:not(.step-num){display:none;}}
   </style>
 </head>
 <body>
 
+<!-- ══ HEADER ══ -->
 <header>
-  <a class="brand" href="#"><span>Don</span> Trove</a>
+  <div class="header-left">
+    <!-- Hamburger button (left of brand) -->
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Browse categories" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <a class="brand" href="#"><span>Don</span> Trove</a>
+  </div>
+
+  <!-- Right nav — Categories button REMOVED -->
   <nav>
     <button class="nav-btn active" onclick="showView('shop')">Shop</button>
-    <button class="nav-btn" onclick="showView('categories')">Categories</button>
     <button class="nav-btn" onclick="showView('cart')">My Cart</button>
     <button class="nav-btn cart-btn" onclick="showView('cart')">
       🛍️ Cart <span class="cart-badge" id="cartBadge">0</span>
@@ -229,6 +291,36 @@ nav{display:flex;align-items:center;gap:6px;}
   </nav>
 </header>
 
+<!-- ══ DRAWER OVERLAY ══ -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<!-- ══ CATEGORIES SIDE DRAWER ══ -->
+<aside class="categories-drawer" id="categoriesDrawer" aria-label="Categories menu">
+  <div class="drawer-header">
+    <div class="drawer-header-label">✦ Browse</div>
+    <div class="drawer-header-title">Categories</div>
+  </div>
+
+  <!-- "All Products" shortcut -->
+  <div class="drawer-all-btn" onclick="drawerGoAll()">
+    <div class="drawer-all-icon">🎁</div>
+    <div class="drawer-all-name">All Products</div>
+  </div>
+
+  <span class="drawer-section-label">Collections</span>
+
+  <!-- Dynamic category list — filled by JS -->
+  <div id="drawerCatList">
+    <!-- Skeleton placeholders while loading -->
+    <div class="drawer-skeleton">
+      <div class="skel-item"><div class="skel-icon"></div><div class="skel-text"><div class="skel-line"></div><div class="skel-line short"></div></div></div>
+      <div class="skel-item"><div class="skel-icon"></div><div class="skel-text"><div class="skel-line"></div><div class="skel-line short"></div></div></div>
+      <div class="skel-item"><div class="skel-icon"></div><div class="skel-text"><div class="skel-line"></div><div class="skel-line short"></div></div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ HERO ══ -->
 <div class="hero">
   <div class="hero-orb hero-orb-1"></div>
   <div class="hero-orb hero-orb-2"></div>
@@ -239,6 +331,7 @@ nav{display:flex;align-items:center;gap:6px;}
   </div>
 </div>
 
+<!-- ══ SEARCH + TABS ══ -->
 <div class="tabs-wrap" id="tabsWrap">
   <div class="search-bar-wrap">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -250,7 +343,7 @@ nav{display:flex;align-items:center;gap:6px;}
 </div>
 <div class="results-meta" id="resultsMeta"></div>
 
-<!-- SHOP VIEW -->
+<!-- ══ SHOP VIEW ══ -->
 <div class="view active" id="view-shop">
   <p class="section-title">Our Collection</p>
   <p class="section-sub">Each gift is carefully selected to delight the ones you love</p>
@@ -259,7 +352,7 @@ nav{display:flex;align-items:center;gap:6px;}
   </div>
 </div>
 
-<!-- CATEGORIES VIEW -->
+<!-- ══ CATEGORIES VIEW (still accessible via drawer "All" → categories page) ══ -->
 <div class="view" id="view-categories">
   <p class="section-title">Browse by Category</p>
   <p class="section-sub">Explore our curated collections for every occasion</p>
@@ -268,15 +361,15 @@ nav{display:flex;align-items:center;gap:6px;}
   </div>
 </div>
 
-<!-- CATEGORY PRODUCTS VIEW -->
+<!-- ══ CATEGORY PRODUCTS VIEW ══ -->
 <div class="view" id="view-category-products">
-  <button class="back-link" onclick="showView('categories')">← Back to Categories</button>
+  <button class="back-link" id="catProductsBackBtn" onclick="showView('shop')">← Back</button>
   <p class="section-title" id="catProductsTitle">Category</p>
   <p class="section-sub" id="catProductsSub"></p>
   <div id="catProductsGrid" class="products-grid"></div>
 </div>
 
-<!-- CART VIEW -->
+<!-- ══ CART VIEW ══ -->
 <div class="view" id="view-cart">
   <p class="section-title">Your Cart</p>
   <p class="section-sub">Review your selections before proceeding</p>
@@ -300,10 +393,9 @@ nav{display:flex;align-items:center;gap:6px;}
   </div>
 </div>
 
-<!-- CHECKOUT / USER DETAILS VIEW -->
+<!-- ══ CHECKOUT VIEW ══ -->
 <div class="view" id="view-checkout">
   <button class="back-link" onclick="showView('cart')">← Back to Cart</button>
-
   <div class="checkout-steps">
     <div class="step done"><span class="step-num">✓</span><span>Cart</span></div>
     <div class="step-line done"></div>
@@ -311,125 +403,52 @@ nav{display:flex;align-items:center;gap:6px;}
     <div class="step-line"></div>
     <div class="step"><span class="step-num">3</span><span>Confirm</span></div>
   </div>
-
   <p class="section-title">Your Details</p>
   <p class="section-sub">Tell us where to send your thoughtful gift</p>
-
   <div class="checkout-grid">
     <div>
-      <!-- Sender -->
       <div class="form-section">
         <div class="form-section-title"><div class="icon">👤</div> Your Information</div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Full Name <span class="req">*</span></label>
-            <input type="text" id="senderName" placeholder="Your full name" required/>
-          </div>
-          <div class="form-group">
-            <label>Phone <span class="req">*</span></label>
-            <input type="tel" id="phone" placeholder="+92 300 0000000" required/>
-          </div>
+          <div class="form-group"><label>Full Name <span class="req">*</span></label><input type="text" id="senderName" placeholder="Your full name" required/></div>
+          <div class="form-group"><label>Phone <span class="req">*</span></label><input type="tel" id="phone" placeholder="+92 300 0000000" required/></div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="email" placeholder="your@email.com"/>
-          </div>
-          <div class="form-group">
-            <label>City <span class="req">*</span></label>
-            <select id="city">
-              <option value="">Select city</option>
-              <option>Karachi</option><option>Lahore</option>
-              <option>Islamabad</option><option>Rawalpindi</option>
-              <option>Peshawar</option><option>Quetta</option>
-              <option>Multan</option><option>Faisalabad</option>
-              <option>Other</option>
-            </select>
+          <div class="form-group"><label>Email</label><input type="email" id="email" placeholder="your@email.com"/></div>
+          <div class="form-group"><label>City <span class="req">*</span></label>
+            <select id="city"><option value="">Select city</option><option>Karachi</option><option>Lahore</option><option>Islamabad</option><option>Rawalpindi</option><option>Peshawar</option><option>Quetta</option><option>Multan</option><option>Faisalabad</option><option>Other</option></select>
           </div>
         </div>
       </div>
-
-      <!-- Recipient -->
       <div class="form-section">
         <div class="form-section-title"><div class="icon">🎁</div> Recipient Details</div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Recipient Name <span class="req">*</span></label>
-            <input type="text" id="recipientName" placeholder="Who is this for?"/>
-          </div>
-          <div class="form-group">
-            <label>Occasion</label>
-            <select id="occasion">
-              <option value="">Select occasion</option>
-              <option>Birthday</option><option>Anniversary</option>
-              <option>Wedding</option><option>Baby Shower</option>
-              <option>Graduation</option><option>Eid</option>
-              <option>Just Because</option><option>Other</option>
-            </select>
+          <div class="form-group"><label>Recipient Name <span class="req">*</span></label><input type="text" id="recipientName" placeholder="Who is this for?"/></div>
+          <div class="form-group"><label>Occasion</label>
+            <select id="occasion"><option value="">Select occasion</option><option>Birthday</option><option>Anniversary</option><option>Wedding</option><option>Baby Shower</option><option>Graduation</option><option>Eid</option><option>Just Because</option><option>Other</option></select>
           </div>
         </div>
-        <div class="form-row full">
-          <div class="form-group">
-            <label>Delivery Address <span class="req">*</span></label>
-            <textarea id="address" placeholder="Full delivery address including area and city"></textarea>
-          </div>
-        </div>
+        <div class="form-row full"><div class="form-group"><label>Delivery Address <span class="req">*</span></label><textarea id="address" placeholder="Full delivery address including area and city"></textarea></div></div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Preferred Delivery Date</label>
-            <input type="date" id="deliveryDate"/>
-          </div>
-          <div class="form-group">
-            <label>Gift Message</label>
-            <input type="text" id="giftMessage" placeholder="A special note…"/>
-          </div>
+          <div class="form-group"><label>Preferred Delivery Date</label><input type="date" id="deliveryDate"/></div>
+          <div class="form-group"><label>Gift Message</label><input type="text" id="giftMessage" placeholder="A special note…"/></div>
         </div>
       </div>
-
-      <!-- Payment -->
       <div class="form-section">
         <div class="form-section-title"><div class="icon">💳</div> Payment Method</div>
         <div class="payment-options" id="paymentOptions">
-          <div class="payment-opt selected" onclick="selectPayment(this,'Cash on Delivery')">
-            <input type="radio" name="payment" checked/>
-            <span class="pay-icon">💵</span>
-            <div class="pay-label">Cash on Delivery</div>
-          </div>
-          <div class="payment-opt" onclick="selectPayment(this,'EasyPaisa')">
-            <input type="radio" name="payment"/>
-            <span class="pay-icon">📱</span>
-            <div class="pay-label">EasyPaisa</div>
-          </div>
-          <div class="payment-opt" onclick="selectPayment(this,'JazzCash')">
-            <input type="radio" name="payment"/>
-            <span class="pay-icon">🏦</span>
-            <div class="pay-label">JazzCash</div>
-          </div>
-          <div class="payment-opt" onclick="selectPayment(this,'Bank Transfer')">
-            <input type="radio" name="payment"/>
-            <span class="pay-icon">🔁</span>
-            <div class="pay-label">Bank Transfer</div>
-          </div>
+          <div class="payment-opt selected" onclick="selectPayment(this,'Cash on Delivery')"><input type="radio" name="payment" checked/><span class="pay-icon">💵</span><div class="pay-label">Cash on Delivery</div></div>
+          <div class="payment-opt" onclick="selectPayment(this,'EasyPaisa')"><input type="radio" name="payment"/><span class="pay-icon">📱</span><div class="pay-label">EasyPaisa</div></div>
+          <div class="payment-opt" onclick="selectPayment(this,'JazzCash')"><input type="radio" name="payment"/><span class="pay-icon">🏦</span><div class="pay-label">JazzCash</div></div>
+          <div class="payment-opt" onclick="selectPayment(this,'Bank Transfer')"><input type="radio" name="payment"/><span class="pay-icon">🔁</span><div class="pay-label">Bank Transfer</div></div>
         </div>
       </div>
-
-      <!-- Notes -->
       <div class="form-section">
         <div class="form-section-title"><div class="icon">📝</div> Additional Notes</div>
-        <div class="form-row full">
-          <div class="form-group">
-            <label>Special Instructions</label>
-            <textarea id="notes" placeholder="Any special instructions for packing, delivery timing, etc."></textarea>
-          </div>
-        </div>
+        <div class="form-row full"><div class="form-group"><label>Special Instructions</label><textarea id="notes" placeholder="Any special instructions for packing, delivery timing, etc."></textarea></div></div>
       </div>
-
-      <button class="place-order-btn" id="placeOrderBtn" onclick="placeOrder()">
-        ✦ Confirm &amp; Place Order
-      </button>
+      <button class="place-order-btn" id="placeOrderBtn" onclick="placeOrder()">✦ Confirm &amp; Place Order</button>
     </div>
-
-    <!-- Sidebar recap -->
     <div class="checkout-summary">
       <div class="summary-title">Your Order</div>
       <div id="checkoutItemsList"></div>
@@ -441,7 +460,7 @@ nav{display:flex;align-items:center;gap:6px;}
   </div>
 </div>
 
-<!-- SUCCESS VIEW -->
+<!-- ══ SUCCESS VIEW ══ -->
 <div class="view" id="view-success">
   <div class="success-view">
     <div class="success-icon">✦</div>
@@ -454,7 +473,7 @@ nav{display:flex;align-items:center;gap:6px;}
   </div>
 </div>
 
-<!-- ADMIN VIEW -->
+<!-- ══ ADMIN VIEW ══ -->
 <div class="view" id="view-manage">
   <div class="manage-header">
     <p class="section-title" style="margin:0">Manage Products</p>
