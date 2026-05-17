@@ -19,8 +19,9 @@ let products        = [];
 let cart            = [];
 let selectedPayment = 'Cash on Delivery';
 let activeCategory  = 'All';
+let drawerOpen      = false;
 
-// Category emoji map — add your own categories here
+// Category emoji map
 const CAT_EMOJI = {
   'All':        '🎁',
   'Planners':   '📓',
@@ -34,6 +35,12 @@ const CAT_EMOJI = {
   'Other':      '✨',
 };
 
+// Category icon background colours (matches brand palette)
+const CAT_ICON_BG = [
+  '#EDE5F9', '#E5F0F9', '#FFF0E0', '#E5F5EC',
+  '#FCE4EC', '#F3E5F5', '#E0F7FA', '#FFFDE7',
+];
+
 const CAT_COLORS = [
   'linear-gradient(135deg,#F3EBF9,#E8D8F5)',
   'linear-gradient(135deg,#E8F4FF,#D0E8FF)',
@@ -44,6 +51,84 @@ const CAT_COLORS = [
   'linear-gradient(135deg,#E0F7FA,#B2EBF2)',
   'linear-gradient(135deg,#FFFDE7,#FFF9C4)',
 ];
+
+// ══════════════════════════════════════════
+//  DRAWER — open / close
+// ══════════════════════════════════════════
+function openDrawer() {
+  drawerOpen = true;
+  document.getElementById('categoriesDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('visible');
+  document.getElementById('hamburgerBtn').classList.add('open');
+  document.getElementById('hamburgerBtn').setAttribute('aria-expanded', 'true');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  drawerOpen = false;
+  document.getElementById('categoriesDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('visible');
+  document.getElementById('hamburgerBtn').classList.remove('open');
+  document.getElementById('hamburgerBtn').setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+}
+
+function toggleDrawer() {
+  drawerOpen ? closeDrawer() : openDrawer();
+}
+
+// "All Products" button inside drawer
+function drawerGoAll() {
+  closeDrawer();
+  activeCategory = 'All';
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.trim() === 'All');
+  });
+  applyFilters('All', (document.getElementById('searchInput')?.value || '').toLowerCase());
+  showView('shop');
+}
+
+// Category item click inside drawer
+function drawerGoCategory(cat) {
+  closeDrawer();
+  openCategory(cat);
+}
+
+// Build the category list inside the drawer (called after products load)
+function buildDrawerCategories() {
+  const catMap = {};
+  products.forEach(p => {
+    const cat = p.category || 'Other';
+    if (!catMap[cat]) catMap[cat] = 0;
+    catMap[cat]++;
+  });
+
+  const cats = Object.keys(catMap);
+  const list = document.getElementById('drawerCatList');
+  if (!list) return;
+
+  if (!cats.length) {
+    list.innerHTML = '<p style="padding:16px 24px;font-size:0.82rem;color:var(--muted);">No categories found.</p>';
+    return;
+  }
+
+  list.innerHTML = cats.map((cat, i) => {
+    const emoji = CAT_EMOJI[cat] || '🎁';
+    const bg    = CAT_ICON_BG[i % CAT_ICON_BG.length];
+    const count = catMap[cat];
+    return `
+    <div class="drawer-item" onclick="drawerGoCategory('${escapeHtml(cat)}')">
+      <div class="drawer-item-left">
+        <div class="drawer-item-icon" style="background:${bg}">${emoji}</div>
+        <div class="drawer-item-text">
+          <div class="drawer-item-name">${escapeHtml(cat)}</div>
+          <div class="drawer-item-count">${count} gift${count !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      <span class="drawer-arrow">›</span>
+    </div>`;
+  }).join('');
+}
 
 // ══════════════════════════════════════════
 //  VIEW NAVIGATION
@@ -70,6 +155,9 @@ function showView(name) {
   if (name === 'manage')             renderManage();
   if (name === 'categories')         renderCategories();
   if (name === 'category-products')  { /* rendered before calling showView */ }
+
+  // Close drawer whenever navigating
+  closeDrawer();
 }
 
 // ══════════════════════════════════════════
@@ -77,15 +165,19 @@ function showView(name) {
 // ══════════════════════════════════════════
 async function loadProducts() {
   try {
-    const res = await fetch(CONFIG.SHEET_URL + '?action=products');
+    const res  = await fetch(CONFIG.SHEET_URL + '?action=products');
     const data = await res.json();
-    products = Array.isArray(data) ? data : (data.products || []);
+    products   = Array.isArray(data) ? data : (data.products || []);
     renderProducts(products);
     buildCategoryTabs();
+    buildDrawerCategories();   // ← populate the drawer after products load
   } catch (err) {
     console.error('Failed to load products:', err);
     document.getElementById('productsGrid').innerHTML =
       `<div class="loading-wrap"><p>⚠️ Could not load products. Please refresh.</p></div>`;
+    // Show error in drawer too
+    const list = document.getElementById('drawerCatList');
+    if (list) list.innerHTML = '<p style="padding:16px 24px;font-size:0.82rem;color:var(--muted);">Could not load categories.</p>';
   }
 }
 
@@ -167,7 +259,7 @@ function renderProducts(list) {
 }
 
 // ══════════════════════════════════════════
-//  CATEGORIES PAGE
+//  CATEGORIES PAGE (grid view)
 // ══════════════════════════════════════════
 function renderCategories() {
   const grid = document.getElementById('categoriesGrid');
@@ -178,7 +270,6 @@ function renderCategories() {
     return;
   }
 
-  // Group products by category
   const catMap = {};
   products.forEach(p => {
     const cat = p.category || 'Other';
@@ -194,9 +285,7 @@ function renderCategories() {
     const bg    = CAT_COLORS[i % CAT_COLORS.length];
     return `
     <div class="category-card" style="animation-delay:${i * 0.07}s" onclick="openCategory('${escapeHtml(cat)}')">
-      <div class="category-card-banner" style="background:${bg}">
-        ${emoji}
-      </div>
+      <div class="category-card-banner" style="background:${bg}">${emoji}</div>
       <div class="category-card-body">
         <div class="category-card-name">${escapeHtml(cat)}</div>
         <div class="category-card-count">${count} gift${count !== 1 ? 's' : ''}</div>
@@ -212,6 +301,10 @@ function openCategory(cat) {
   document.getElementById('catProductsTitle').textContent = cat;
   document.getElementById('catProductsSub').textContent =
     `${catProducts.length} gift${catProducts.length !== 1 ? 's' : ''} in this collection`;
+
+  // Back button goes to shop (since we arrived from the drawer, not the categories page)
+  const backBtn = document.getElementById('catProductsBackBtn');
+  if (backBtn) backBtn.onclick = () => showView('shop');
 
   const grid = document.getElementById('catProductsGrid');
   grid.innerHTML = catProducts.map((p, i) => {
@@ -242,7 +335,7 @@ function openCategory(cat) {
 //  CART LOGIC
 // ══════════════════════════════════════════
 function addToCart(idx) {
-  const p = products[idx];
+  const p        = products[idx];
   const existing = cart.find(c => c.name === p.name);
   if (existing) {
     existing.qty++;
@@ -336,7 +429,7 @@ function proceedToCheckout() {
   if (!cart.length) return;
   showView('checkout');
   const today = new Date().toISOString().split('T')[0];
-  const dd = document.getElementById('deliveryDate');
+  const dd    = document.getElementById('deliveryDate');
   if (dd) dd.min = today;
 }
 
@@ -389,7 +482,6 @@ async function placeOrder() {
     notes:         val('notes'),
   };
 
-  // Validation
   if (!fields.senderName || !fields.phone || !fields.city || !fields.recipientName || !fields.address) {
     showToast('⚠️ Please fill in all required fields');
     return;
@@ -398,7 +490,7 @@ async function placeOrder() {
   const btn = document.getElementById('placeOrderBtn');
   btn.classList.add('submitting');
   btn.textContent = '⏳ Placing order…';
-  btn.disabled = true;
+  btn.disabled    = true;
 
   const sub      = getSubtotal();
   const wrap     = giftWrapCost();
@@ -422,13 +514,12 @@ async function placeOrder() {
 
   try {
     await fetch(CONFIG.SHEET_URL, {
-      method: 'POST',
-      mode:   'no-cors',
+      method:  'POST',
+      mode:    'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body:   JSON.stringify(payload),
+      body:    JSON.stringify(payload),
     });
   } catch (err) {
-    // no-cors: response is opaque, this is expected
     console.warn('POST sent (no-cors). Order recorded in sheet.', err);
   }
 
@@ -440,7 +531,7 @@ async function placeOrder() {
 //  RESET
 // ══════════════════════════════════════════
 function resetAll() {
-  cart = [];
+  cart           = [];
   activeCategory = 'All';
   updateBadge();
 
@@ -528,8 +619,21 @@ function escapeHtml(str) {
 }
 
 // ══════════════════════════════════════════
+//  DRAWER — event listeners
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('hamburgerBtn').addEventListener('click', toggleDrawer);
+  document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+
+  // Close drawer on Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && drawerOpen) closeDrawer();
+  });
+});
+
+// ══════════════════════════════════════════
 //  ADMIN SECRET ACCESS
-//  Go to: index.html#manage-dt-admin
+//  Visit: index.html#manage-dt-admin
 // ══════════════════════════════════════════
 if (location.hash === '#manage-dt-admin') {
   window.addEventListener('load', () => showView('manage'));
