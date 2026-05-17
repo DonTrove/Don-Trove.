@@ -1,25 +1,20 @@
-/* ══════════════════════════════════════════
-   Don Trove — Curated Gifts
-   style.css
-   ══════════════════════════════════════════ */
 
-/* ── CSS VARIABLES ── */
+\
+`
 :root {
-  --plum:            #2D0A4E;
-  --royal:           #4B1A8C;
-  --violet:          #7B3FC4;
-  --lavender:        #C4A8E8;
-  --blush:           #F3EBF9;
-  --gold:            #C9A84C;
-  --gold-light:      #E8C97A;
-  --cream:           #FAF6FF;
-  --text:            #1A0630;
-  --muted:           #7A6890;
-  --white:           #FFFFFF;
-  --light-pink:      #FFB6C1;
-  --light-pink-hover:#FFA0B4;
-  --shadow:          0 4px 32px rgba(75, 26, 140, 0.13);
-  --shadow-lg:       0 12px 60px rgba(45, 10, 78, 0.22);
+  --plum:       #2D0A4E;
+  --royal:      #4B1A8C;
+  --violet:     #7B3FC4;
+  --lavender:   #C4A8E8;
+  --blush:      #F3EBF9;
+  --gold:       #C9A84C;
+  --gold-light: #E8C97A;
+  --cream:      #FAF6FF;
+  --text:       #1A0630;
+  --muted:      #7A6890;
+  --white:      #FFFFFF;
+  --shadow:     0 4px 32px rgba(75, 26, 140, 0.13);
+  --shadow-lg:  0 12px 60px rgba(45, 10, 78, 0.22);
 }
 
 /* ── RESET ── */
@@ -60,7 +55,7 @@ header {
   font-size: 1.8rem;
   font-weight: 300;
   letter-spacing: 0.18em;
-  color: var(--light-pink-hover);
+  color: var(--gold-light);
   text-transform: uppercase;
   text-decoration: none;
 }
@@ -96,13 +91,13 @@ nav {
   color: var(--white);
 }
 .nav-btn.cart-btn {
-  background: var(--light-pink);
+  background: var(--gold);
   color: var(--plum);
   font-weight: 600;
   position: relative;
   padding-right: 22px;
 }
-.nav-btn.cart-btn:hover { background: var(--light-pink-hover); }
+.nav-btn.cart-btn:hover { background: var(--gold-light); }
 
 .cart-badge {
   position: absolute;
@@ -147,14 +142,14 @@ nav {
   opacity: 0.35;
 }
 .hero-orb-1 { width: 320px; height: 320px; background: var(--violet); top: -80px; left: -60px; }
-.hero-orb-2 { width: 240px; height: 240px; background: var(--light-pink); bottom: -60px; right: -40px; }
+.hero-orb-2 { width: 240px; height: 240px; background: var(--gold); bottom: -60px; right: -40px; }
 
 .hero-content { position: relative; z-index: 2; }
 
 .hero-tag {
   display: inline-block;
-  border: 1px solid var(--light-pink);
-  color: var(--light-pink);
+  border: 1px solid var(--gold);
+  color: var(--gold);
   font-size: 0.7rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -171,7 +166,7 @@ nav {
   letter-spacing: 0.04em;
   margin-bottom: 14px;
 }
-.hero h1 em { color: var(--light-pink-hover); font-style: italic; }
+.hero h1 em { color: var(--gold-light); font-style: italic; }
 .hero p {
   color: var(--lavender);
   font-size: 1rem;
@@ -181,18 +176,60 @@ nav {
   margin: 0 auto;
 }
 
-/* ══ TABS ══ */
+/* ══ TABS + SEARCH TOOLBAR ══ */
 .tabs-wrap {
   display: flex;
-  justify-content: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   background: var(--white);
-  padding: 18px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid rgba(123, 63, 196, 0.12);
   position: sticky;
   top: 68px;
   z-index: 80;
   box-shadow: 0 2px 20px rgba(45, 10, 78, 0.06);
+}
+
+/* Search bar */
+.search-bar-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+}
+.search-bar-wrap svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--violet);
+  pointer-events: none;
+}
+.search-bar {
+  width: 100%;
+  padding: 10px 16px 10px 42px;
+  border: 1.5px solid #E8DDF5;
+  border-radius: 40px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--blush);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.search-bar:focus {
+  border-color: var(--violet);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(123, 63, 196, 0.12);
+}
+.search-bar::placeholder { color: var(--lavender); }
+
+/* Category tab row */
+.tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 }
 .tab {
   background: none;
@@ -665,7 +702,7 @@ nav {
 .admin-label { font-size: 0.75rem; color: var(--muted); }
 .manage-info-banner {
   background: linear-gradient(135deg, #FFF9E6, #FFF3CC);
-  border: 1px solid var(--light-pink);
+  border: 1px solid var(--gold);
   border-radius: 12px;
   padding: 14px 18px;
   font-size: 0.85rem;
@@ -728,7 +765,7 @@ nav {
   pointer-events: none;
   transform: translateY(20px);
   transition: opacity 0.3s, transform 0.3s;
-  border-left: 3px solid var(--light-pink);
+  border-left: 3px solid var(--gold);
 }
 .toast.show { opacity: 1; transform: translateY(0); }
 
@@ -747,6 +784,15 @@ nav {
   margin: 0 auto 16px;
 }
 
+/* ══ RESULTS META ══ */
+.results-meta {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+.results-meta strong { color: var(--royal); }
+
 /* ══ ANIMATIONS ══ */
 @keyframes spin    { to { transform: rotate(360deg); } }
 @keyframes fadeUp  { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
@@ -763,6 +809,8 @@ nav {
   .nav-btn:not(.cart-btn) { display: none; }
   .view            { padding: 28px 14px 80px; }
   .payment-options { grid-template-columns: 1fr; }
+  .search-bar-wrap { max-width: 100%; }
+  .tabs-wrap       { padding: 12px 14px; gap: 10px; }
 }
 @media (max-width: 560px) {
   .form-row        { grid-template-columns: 1fr; }
