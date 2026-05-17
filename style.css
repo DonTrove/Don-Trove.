@@ -58,7 +58,7 @@ header {
   font-size: 1.8rem;
   font-weight: 300;
   letter-spacing: 0.18em;
-  color: var(--gold-light);
+  color: var(--silver-light);
   text-transform: uppercase;
   text-decoration: none;
 }
@@ -100,7 +100,7 @@ nav {
   position: relative;
   padding-right: 22px;
 }
-.nav-btn.cart-btn:hover { background: var(--gold-light); }
+.nav-btn.cart-btn:hover { background: var(--silver-light); }
 
 .cart-badge {
   position: absolute;
@@ -145,14 +145,14 @@ nav {
   opacity: 0.35;
 }
 .hero-orb-1 { width: 320px; height: 320px; background: var(--violet); top: -80px; left: -60px; }
-.hero-orb-2 { width: 240px; height: 240px; background: var(--gold); bottom: -60px; right: -40px; }
+.hero-orb-2 { width: 240px; height: 240px; background: var(--silver); bottom: -60px; right: -40px; }
 
 .hero-content { position: relative; z-index: 2; }
 
 .hero-tag {
   display: inline-block;
-  border: 1px solid var(--gold);
-  color: var(--gold);
+  border: 1px solid var(--silver);
+  color: var(--silver);
   font-size: 0.7rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -169,7 +169,7 @@ nav {
   letter-spacing: 0.04em;
   margin-bottom: 14px;
 }
-.hero h1 em { color: var(--gold-light); font-style: italic; }
+.hero h1 em { color: var(--silver-light); font-style: italic; }
 .hero p {
   color: var(--lavender);
   font-size: 1rem;
@@ -663,7 +663,7 @@ nav {
 .admin-label { font-size: 0.75rem; color: var(--muted); }
 .manage-info-banner {
   background: linear-gradient(135deg, #FFF9E6, #FFF3CC);
-  border: 1px solid var(--gold);
+  border: 1px solid var(--silver);
   border-radius: 12px;
   padding: 14px 18px;
   font-size: 0.85rem;
@@ -726,7 +726,7 @@ nav {
   pointer-events: none;
   transform: translateY(20px);
   transition: opacity 0.3s, transform 0.3s;
-  border-left: 3px solid var(--gold);
+  border-left: 3px solid var(--silver);
 }
 .toast.show { opacity: 1; transform: translateY(0); }
 
