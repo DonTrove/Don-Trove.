@@ -9,7 +9,7 @@
 //  CONFIG
 // ══════════════════════════════════════════
 const CONFIG = {
-  SHEET_URL:     'https://script.google.com/macros/s/AKfycbz9T5BOg4uZiehgMfwvxCrAi4r1ErRmIufnD1o5TW1kf4pDhpzKjDunjbfiCJAbr7buQQ/exec',
+  SHEET_URL:     'https://script.google.com/macros/s/AKfycbzjNuUgMw8D0S86GCrUDev9PWrpjyioApT-5ePG34ucg4GE_0UEAST19_zLl5pmYZJjRg/exec',
   DELIVERY_FEE:  200,
   GIFT_WRAP_FEE: 300,
 };
