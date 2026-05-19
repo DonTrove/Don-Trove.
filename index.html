@@ -1,161 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Don Trove</title>
-
-  <!-- GOOGLE FONTS -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="./style.css">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Don Trove</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav class="nav">
-    <div class="nav-left">
-      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Categories">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="nav-logo">Don Trove</div>
-    </div>
-    <div class="nav-right">
-      <button class="cart-btn" id="cartBtn">
-        🛒 CART <span class="cart-badge" id="cartBadge" style="display:none">0</span>
-      </button>
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-tag">✦ Curated with Love</div>
-    <h1 class="hero-title">Le Tresor De <em>Misfah.</em></h1>
-    <p class="hero-sub">Each gift is carefully selected to delight the ones you love</p>
+<!-- ═══════════════════════════════════════════
+     NAVIGATION
+════════════════════════════════════════════ -->
+<nav class="nav">
+  <div class="nav-left">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Categories">
+      <span></span><span></span><span></span>
+    </button>
+    <img class="nav-logo-img" src="assets/logo.png" alt="Don Trove logo" onerror="this.style.display='none'"/>
+    <div class="nav-logo">Don Trove</div>
   </div>
-
-  <!-- SEARCH -->
-  <div class="search-bar-wrap">
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" id="searchInput" placeholder="Search gifts…" type="text" />
-    </div>
+  <div class="nav-right">
+    <button class="cart-btn" id="cartBtn">
+      🛒 CART
+      <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+    </button>
   </div>
+</nav>
 
-  <!-- FEATURED CAROUSEL -->
-  <div class="carousel-section" id="carouselSection">
-    <div class="section-label">✦ Hand-picked</div>
-    <div class="section-title">Featured Gifts</div>
-    <div class="section-sub">Our most-loved pieces this season</div>
-    <div class="carousel-outer" id="carouselOuter">
-      <div class="carousel-track" id="carouselTrack"></div>
-      <button class="carousel-nav prev" id="carouselPrev">&#8249;</button>
-      <button class="carousel-nav next" id="carouselNext">&#8250;</button>
-    </div>
+<!-- ═══════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-tag">✦ Curated with Love</div>
+  <h1 class="hero-title">Le Tresor De <em>Misfah.</em></h1>
+  <p class="hero-sub">Each gift is carefully selected to delight the ones you love</p>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SEARCH BAR
+════════════════════════════════════════════ -->
+<div class="search-bar-wrap">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="searchInput" placeholder="Search gifts…" type="text"/>
   </div>
+</div>
 
-  <!-- PRODUCTS GRID -->
-  <div class="grid-section">
-    <div class="active-filter-bar" id="activeFilterBar" style="display:none">
-      <span class="af-label">Showing</span>
-      <span class="af-pill" id="activeFilterPill"></span>
-      <button class="af-clear" id="clearFilterBtn">✕ clear</button>
-    </div>
-    <div class="loading" id="loadingMsg">Loading collection…</div>
-    <div class="product-grid" id="productGrid"></div>
+<!-- ═══════════════════════════════════════════
+     FEATURED CAROUSEL
+════════════════════════════════════════════ -->
+<div class="carousel-section" id="carouselSection" style="display:none">
+  <div class="section-label">✦ Hand-picked</div>
+  <div class="section-title">Featured Gifts</div>
+  <div class="section-sub">Our most-loved pieces this season</div>
+  <div class="carousel-outer" id="carouselOuter">
+    <div class="carousel-track" id="carouselTrack"></div>
+    <button class="carousel-nav prev" id="carouselPrev">&#8249;</button>
+    <button class="carousel-nav next" id="carouselNext">&#8250;</button>
   </div>
+</div>
 
-  <!-- CATEGORY SIDEBAR -->
-  <div class="cat-overlay" id="catOverlay"></div>
-  <div class="cat-sidebar" id="catSidebar">
-    <div class="cat-head">
-      <div class="cat-head-title">✦ Categories</div>
-      <button class="cat-close" id="catClose">✕</button>
-    </div>
-    <div class="cat-list" id="catList"></div>
-    <div class="cat-footer">
-      <div class="cat-footer-text">Don Trove · Curated with Love</div>
-    </div>
+<!-- ═══════════════════════════════════════════
+     PRODUCT GRID
+════════════════════════════════════════════ -->
+<div class="grid-section">
+  <div class="active-filter-bar" id="activeFilterBar" style="display:none">
+    <span class="af-label">Showing</span>
+    <span class="af-pill" id="activeFilterPill"></span>
+    <button class="af-clear" id="clearFilterBtn">✕ clear</button>
   </div>
+  <div class="loading" id="loadingMsg">Loading collection…</div>
+  <div class="product-grid" id="productGrid"></div>
+</div>
 
-  <!-- LIGHTBOX -->
-  <div class="lightbox" id="lightbox">
-    <button class="lb-arrow prev" id="lbPrev">&#8249;</button>
-    <div class="lb-inner">
-      <button class="lb-close" id="lbClose">✕</button>
-      <img class="lb-img" id="lbImg" src="" alt="" />
-      <div class="lb-info">
-        <div class="lb-name" id="lbName"></div>
-        <div class="lb-price" id="lbPrice"></div>
-        <button class="lb-add" id="lbAdd">Add to Cart</button>
-      </div>
-    </div>
-    <button class="lb-arrow next" id="lbNext">&#8250;</button>
+<!-- ═══════════════════════════════════════════
+     CATEGORY SIDEBAR
+════════════════════════════════════════════ -->
+<div class="cat-overlay" id="catOverlay"></div>
+<div class="cat-sidebar" id="catSidebar">
+  <div class="cat-head">
+    <div class="cat-head-title">✦ Categories</div>
+    <button class="cat-close" id="catClose">✕</button>
   </div>
+  <div class="cat-list" id="catList"></div>
+  <div class="cat-footer">
+    <div class="cat-footer-text">Don Trove · Curated with Love</div>
+  </div>
+</div>
 
-  <!-- CART DRAWER -->
-  <div class="drawer-overlay" id="drawerOverlay"></div>
-  <div class="drawer" id="cartDrawer">
-    <div class="drawer-head">
-      <div class="drawer-title">Your Cart</div>
-      <button class="drawer-close" id="drawerClose">✕</button>
-    </div>
-    <div class="drawer-items" id="drawerItems"></div>
-    <div class="drawer-foot" id="drawerFoot" style="display:none">
-      <div class="cart-total">
-        <span>Total</span>
-        <span id="cartTotalAmt"></span>
-      </div>
-      <button class="checkout-btn" id="checkoutBtn">Checkout →</button>
+<!-- ═══════════════════════════════════════════
+     LIGHTBOX
+════════════════════════════════════════════ -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-arrow prev" id="lbPrev">&#8249;</button>
+  <div class="lb-inner">
+    <button class="lb-close" id="lbClose">✕</button>
+    <img class="lb-img" id="lbImg" src="" alt=""/>
+    <div class="lb-info">
+      <div class="lb-name" id="lbName"></div>
+      <div class="lb-price" id="lbPrice"></div>
+      <button class="lb-add" id="lbAdd">Add to Cart</button>
     </div>
   </div>
+  <button class="lb-arrow next" id="lbNext">&#8250;</button>
+</div>
 
-  <!-- ORDER MODAL -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <div class="modal-title">Complete Your Order</div>
-      <div class="form-row">
-        <div class="form-field">
-          <label class="form-label">Full Name *</label>
-          <input class="form-input" id="fName" placeholder="Misfah" />
-        </div>
-        <div class="form-field">
-          <label class="form-label">Phone *</label>
-          <input class="form-input" id="fPhone" placeholder="0300-0000000" />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label class="form-label">City *</label>
-          <input class="form-input" id="fCity" placeholder="Karachi" />
-        </div>
-        <div class="form-field">
-          <label class="form-label">Total</label>
-          <input class="form-input" id="fTotal" readonly style="background:#f0ebf8;cursor:not-allowed" />
-        </div>
+<!-- ═══════════════════════════════════════════
+     CART DRAWER
+════════════════════════════════════════════ -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="cartDrawer">
+  <div class="drawer-head">
+    <div class="drawer-title">Your Cart</div>
+    <button class="drawer-close" id="drawerClose">✕</button>
+  </div>
+  <div class="drawer-items" id="drawerItems"></div>
+  <div class="drawer-foot" id="drawerFoot" style="display:none">
+    <div class="cart-total">
+      <span>Total</span>
+      <span id="cartTotalAmt"></span>
+    </div>
+    <button class="checkout-btn" id="checkoutBtn">Checkout →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ORDER MODAL
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Complete Your Order</div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="fName" placeholder="Misfah"/>
       </div>
       <div class="form-field">
-        <label class="form-label">Delivery Address *</label>
-        <input class="form-input" id="fAddress" placeholder="House #, Street, Area" />
+        <label class="form-label">Phone *</label>
+        <input class="form-input" id="fPhone" placeholder="0300-0000000"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">City *</label>
+        <input class="form-input" id="fCity" placeholder="Karachi"/>
       </div>
       <div class="form-field">
-        <label class="form-label">Order Notes</label>
-        <input class="form-input" id="fNotes" placeholder="Gift wrapping? Special instructions?" />
+        <label class="form-label">Total</label>
+        <input class="form-input" id="fTotal" readonly style="background:#fce8ee;cursor:not-allowed"/>
       </div>
-      <div class="order-summary" id="orderSummary"></div>
-      <button class="submit-btn" id="submitBtn">Place Order →</button>
-      <button class="modal-cancel" id="modalCancel">Cancel</button>
     </div>
+    <div class="form-field">
+      <label class="form-label">Delivery Address *</label>
+      <input class="form-input" id="fAddress" placeholder="House #, Street, Area"/>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Order Notes</label>
+      <input class="form-input" id="fNotes" placeholder="Gift wrapping? Special instructions?"/>
+    </div>
+    <div class="order-summary" id="orderSummary"></div>
+    <button class="submit-btn" id="submitBtn">Place Order →</button>
+    <button class="modal-cancel" id="modalCancel">Cancel</button>
   </div>
+</div>
 
-  <!-- TOAST -->
-  <div class="toast" id="toast"></div>
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
 
-  <script src="app.js"></script>
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script src="app.js"></script>
 </body>
 </html>
