@@ -1,139 +1,106 @@
-# 🎁 Don Trove — Curated Gifts Storefront
+# Don Trove 🌸
+**Le Tresor De Misfah** — A curated gift store storefront
 
-A lightweight, elegant gift shop frontend powered by a **Google Sheet** as the product catalogue and a **Google Apps Script** as the backend. No server, no database, no npm — just open `index.html` and deploy.
-
-![Don Trove Preview](docs/preview.png)
-
----
-
-## ✨ Features
-
-- **Product catalogue** pulled live from a Google Sheet
-- **Shopping cart** with quantity controls and gift-wrap add-on
-- **Checkout flow** — sender info, recipient details, occasion, gift message
-- **4 payment methods** — Cash on Delivery, EasyPaisa, JazzCash, Bank Transfer
-- **Order recording** — every order is saved to an Orders sheet automatically
-- **Admin view** — hidden at `index.html#manage-dt-admin`
-- **Responsive design** — works on mobile, tablet, and desktop
-- Zero dependencies — pure HTML, CSS, and vanilla JS
+A fully static front-end (HTML + CSS + JS) that reads products from Google Sheets and submits orders via Google Apps Script. No server required — host on GitHub Pages for free.
 
 ---
 
-## 📁 Project Structure
+## 📁 File Structure
 
 ```
 don-trove/
-├── index.html          # Main storefront page
-├── css/
-│   └── style.css       # All styles
-├── js/
-│   └── app.js          # All application logic
-├── docs/
-│   └── Code.gs         # Google Apps Script backend (paste into script.google.com)
-└── README.md
+├── index.html   ← markup & layout
+├── style.css    ← all styles & CSS variables
+├── app.js       ← product loading, cart, orders logic
+├── Code.gs      ← Google Apps Script (paste into Apps Script editor)
+└── assets/
+    └── logo.png ← (optional) your logo image
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Set up the Google Sheet
+### 1. Google Sheet — Products
 
-1. Create a new [Google Sheet](https://sheets.google.com).
-2. Add a sheet tab named **Products** with these columns in row 1:
+Create a Google Sheet with a tab named **Products** and these columns:
 
-   | A    | B     | C           | D         | E      |
-   |------|-------|-------------|-----------|--------|
-   | Name | Price | Description | Image URL | Active |
+| id | name | category | description | price | imageUrl | featured |
+|----|------|----------|-------------|-------|----------|----------|
+| 1  | Digital Planner | PLANNER | Stay organised | 1500 | https://… | TRUE |
 
-3. Add your products in the rows below. Set **Active** to `YES` to show a product, `NO` to hide it.
-4. Copy the **Spreadsheet ID** from the URL:
-   `https://docs.google.com/spreadsheets/d/`**`THIS_PART`**`/edit`
+Make the sheet **publicly viewable** (Share → Anyone with the link → Viewer).
 
-### 2. Deploy the Google Apps Script
+Copy the Sheet ID from the URL:  
+`https://docs.google.com/spreadsheets/d/`**`YOUR_SHEET_ID`**`/edit`
 
-1. Go to [script.google.com](https://script.google.com) → **New project**.
-2. Replace all code with the contents of `docs/Code.gs`.
-3. Replace `YOUR_SPREADSHEET_ID_HERE` with your actual Sheet ID.
-4. Click **Deploy → New deployment**:
+Update `app.js`:
+```js
+const SHEET_PRODUCTS_URL =
+  "https://opensheet.elk.sh/YOUR_SHEET_ID/Products";
+```
+
+### 2. Google Apps Script — Orders
+
+1. In your Google Sheet go to **Extensions → Apps Script**
+2. Paste the contents of `Code.gs` (replace any existing code)
+3. Save, then **Deploy → New deployment**
    - Type: **Web app**
    - Execute as: **Me**
    - Who has access: **Anyone**
-5. Click **Deploy** and copy the web app URL.
+4. Copy the deployment URL
 
-### 3. Connect the frontend
-
-Open `js/app.js` and paste your deployment URL:
-
+Update `app.js`:
 ```js
-const CONFIG = {
-  SHEET_URL: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_URL/exec',
-  // ...
-};
+const SHEET_ORDERS_URL =
+  "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
 ```
 
-### 4. Open in browser
+### 3. Host on GitHub Pages
 
-Simply open `index.html` in any modern browser — no build step needed.
+1. Push all files to a GitHub repository
+2. Go to **Settings → Pages → Source → main branch / root**
+3. Your store is live at `https://yourusername.github.io/your-repo/`
 
 ---
 
-## 🌐 Deploy to GitHub Pages
+## ✨ Features
 
-1. Push this repo to GitHub.
-2. Go to **Settings → Pages**.
-3. Source: **Deploy from a branch** → `main` → `/ (root)`.
-4. Your store will be live at `https://yourusername.github.io/don-trove/`.
-
----
-
-## 🔒 Admin Panel
-
-Navigate to:
-```
-index.html#manage-dt-admin
-```
-This shows a read-only product list. Product management is done directly in the Google Sheet.
-
----
-
-## 💳 Payment Methods
-
-| Method            | Notes                          |
-|-------------------|--------------------------------|
-| Cash on Delivery  | Default; no extra steps needed |
-| EasyPaisa         | Customer sends to your number  |
-| JazzCash          | Customer sends to your number  |
-| Bank Transfer     | Customer transfers before delivery |
-
-> Payment is handled manually — Don Trove does not process payments online. Orders are recorded in your Google Sheet for follow-up.
+- 📦 Products pulled live from Google Sheets
+- 🎠 Featured carousel for hand-picked items
+- 🔍 Real-time search across name, category & description
+- 🗂️ Category filter sidebar
+- 🔍 Product lightbox with prev/next navigation
+- 🛒 Cart drawer with quantity tracking
+- 📋 Checkout modal → order written to Google Sheet
+- 🌸 Fully responsive (mobile-first)
+- ⌨️ Escape key closes any open panel
 
 ---
 
 ## 🎨 Customisation
 
-| What                | Where                        |
-|---------------------|------------------------------|
-| Brand name & colours | `css/style.css` → `:root`   |
-| Delivery fee         | `js/app.js` → `CONFIG`      |
-| Gift wrap fee        | `js/app.js` → `CONFIG`      |
-| Currency label (PKR) | Search & replace in `app.js` |
-| Occasion list        | `index.html` → `<select id="occasion">` |
+All colours are CSS variables in `style.css`:
+
+```css
+:root {
+  --pink:       #e8708a;   /* primary accent */
+  --pink-dark:  #b84060;   /* dark accent, headings */
+  --pink-light: #fce8ee;   /* soft backgrounds */
+  --bg:         #fff5f7;   /* page background */
+}
+```
+
+Change `--pink` and `--pink-dark` to your brand colours and the whole UI updates instantly.
 
 ---
 
-## 📦 Orders Sheet (Auto-Created)
+## 📦 Dependencies
 
-When the first order is placed, a **Orders** sheet is created automatically with these columns:
-
-`Order Ref | Date/Time | Sender Name | Phone | Email | Recipient Name | Delivery Address | Delivery Date | Occasion | Gift Message | Items | Subtotal | Gift Wrap | Delivery Fee | Total | Payment Method`
+None — vanilla HTML/CSS/JS only. Fonts loaded from Google Fonts CDN.
 
 ---
 
 ## 📄 License
 
-MIT — free to use, modify, and deploy.
-
----
-
-*Built with 💜 for Don Trove*
+MIT — free to use and adapt for personal or commercial projects.
