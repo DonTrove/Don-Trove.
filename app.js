@@ -15,36 +15,7 @@ const SHEET_PRODUCTS_URL =
 const SHEET_ORDERS_URL =
 "https://script.google.com/macros/s/AKfycbxy4v35wLYYitBtuI_gRJR-IS2Dt2NB3q0SAkK-n8SSeB8S-OUhL3_qvwbyTqnPKr16ag/exec";
 
-/* ── Fallback products (shown if Sheet fails) ───── */
-const MOCK_PRODUCTS = [
-  {
-    id: "1",
-    name: "Digital Planner",
-    category: "PLANNER",
-    description: "Black planners – stay organised in style",
-    price: 1500,
-    imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80",
-    featured: true,
-  },
-  {
-    id: "2",
-    name: "Textured Notebook",
-    category: "NOTEBOOK",
-    description: "Aesthetic teal texture cover",
-    price: 2000,
-    imageUrl: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=600&q=80",
-    featured: true,
-  },
-  {
-    id: "3",
-    name: "Printed Journal",
-    category: "NOTEBOOK",
-    description: "Vibrant printed style with gold rings",
-    price: 3000,
-    imageUrl: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80",
-    featured: true,
-  },
-];
+
 
 /* ── State ──────────────────────────────────────── */
 let products       = [];
