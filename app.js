@@ -10,10 +10,10 @@
                         web-app deployment URL
    ═══════════════════════════════════════════════════ */
 const SHEET_PRODUCTS_URL =
-  "https://docs.google.com/spreadsheets/d/1l1pIsSdVIbbu0AEEEJvDhlhinA4nGimT-ZSBGX0oLbY/edit?gid=0#gid=0";
+"https://docs.google.com/spreadsheets/d/1l1pIsSdVIbbu0AEEEJvDhlhinA4nGimT-ZSBGX0oLbY/edit?gid=962807164#gid=962807164";
 
 const SHEET_ORDERS_URL =
-  "https://script.google.com/macros/s/AKfycbxckyMVeHv_G-qtPoGkDT2D0EWonGqMa75LPyvg_-6yNd3n4MajEVCmeBdG7aOdIQARCg/exec";
+"https://script.google.com/macros/s/AKfycbzaabs26C3GlSFGR8yNy2UHC5lhELkHT6OE0tuHWTcRqRiNxeRUt_x7n3OmF1NhfdpF2g/exec";
 
 /* ── Fallback products (shown if Sheet fails) ───── */
 const MOCK_PRODUCTS = [
