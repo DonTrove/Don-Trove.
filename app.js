@@ -1,479 +1,424 @@
-/* ═══════════════════════════════════════════════════
-   DON TROVE — app.js
-   ═══════════════════════════════════════════════════
+/**
+ * Le Trésor de Misfah — Main App
+ * Handles: Products display, search, categories, cart, orders → Google Sheets
+ */
 
-   CONFIG — update these two URLs to your own:
-   ─────────────────────────────────────────────────
-   SHEET_PRODUCTS_URL : opensheet.elk.sh proxy to your
-                        Google Sheet "Products" tab
-   SHEET_ORDERS_URL   : your Google Apps Script
-                        web-app deployment URL
-   ═══════════════════════════════════════════════════ */
-const SHEET_PRODUCTS_URL =
-"https://opensheet.elk.sh/1l1pIsSdVIbbu0AEEEJvDhlhinA4nGimT-ZSBGX0oLbY /Products";
+// ─── STATE ────────────────────────────────────────────────────────
+let allProducts    = [];
+let filteredProducts = [];
+let activeCategory = 'all';
+let searchQuery    = '';
+let cart           = JSON.parse(localStorage.getItem('ltm_cart') || '[]');
+let currentProduct = null;
 
-const SHEET_ORDERS_URL =
-"https://script.google.com/macros/s/AKfycbxy4v35wLYYitBtuI_gRJR-IS2Dt2NB3q0SAkK-n8SSeB8S-OUhL3_qvwbyTqnPKr16ag/exec";
+// ─── DOM REFS ─────────────────────────────────────────────────────
+const grid          = document.getElementById('products-grid');
+const searchInput   = document.getElementById('search-input');
+const searchBtn     = document.getElementById('search-btn');
+const searchBar     = document.getElementById('search-results-bar');
+const searchText    = document.getElementById('search-results-text');
+const clearSearch   = document.getElementById('clear-search');
+const noResults     = document.getElementById('no-results');
+const sectionTitle  = document.getElementById('section-title');
+const sectionSub    = document.getElementById('section-subtitle');
+const categoryList  = document.getElementById('category-list');
 
+const hamburgerBtn  = document.getElementById('hamburger-btn');
+const drawer        = document.getElementById('drawer');
+const drawerOverlay = document.getElementById('drawer-overlay');
+const drawerClose   = document.getElementById('drawer-close');
 
+const modalOverlay  = document.getElementById('modal-overlay');
+const modalClose    = document.getElementById('modal-close');
+const orderForm     = document.getElementById('order-form');
+const modalProductInfo = document.getElementById('modal-product-info');
+const orderSuccess  = document.getElementById('order-success');
+const submitBtn     = document.getElementById('submit-order-btn');
+const submitLabel   = document.getElementById('submit-label');
 
-/* ── State ──────────────────────────────────────── */
-let products       = [];
-let cart           = [];
-let activeFilter   = "ALL";
-let searchQuery    = "";
-let lbProducts     = [];
-let lbIndex        = 0;
-let carouselIdx    = 0;
-let carouselFeatured = [];
+const cartBtn       = document.getElementById('cart-btn');
+const cartPanel     = document.getElementById('cart-panel');
+const cartClose     = document.getElementById('cart-close');
+const cartCount     = document.getElementById('cart-count');
+const cartItems     = document.getElementById('cart-items');
+const cartEmpty     = document.getElementById('cart-empty');
+const cartFooter    = document.getElementById('cart-footer');
+const cartTotalEl   = document.getElementById('cart-total-price');
+const cartCheckout  = document.getElementById('cart-checkout');
 
-/* ── Helpers ────────────────────────────────────── */
-const fmt = (n) => `PKR ${Number(n).toLocaleString("en-PK")}`;
-const $   = (id) => document.getElementById(id);
+const successClose  = document.getElementById('success-close');
 
-function safeImage(url) {
-  return url || "https://via.placeholder.com/600x400/fce8ee/e8708a?text=No+Image";
+// ─── SPARKLES ────────────────────────────────────────────────────
+function createSparkles() {
+  const bg = document.getElementById('sparkle-bg');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.style.cssText = `
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      --dur:${2 + Math.random()*4}s;
+      --delay:${Math.random()*5}s;
+      width:${2 + Math.random()*3}px;
+      height:${2 + Math.random()*3}px;
+    `;
+    bg.appendChild(s);
+  }
 }
 
-/* ── Toast ──────────────────────────────────────── */
-let toastTimer;
-
-function showToast(msg) {
-  const t = $("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+// ─── FETCH PRODUCTS ───────────────────────────────────────────────
+async function loadProducts() {
+  if (CONFIG.DEMO_MODE) {
+    allProducts = DEMO_PRODUCTS;
+    buildCategories();
+    renderProducts(allProducts);
+    return;
+  }
+  try {
+    const res  = await fetch(CONFIG.PRODUCTS_CSV_URL);
+    const text = await res.text();
+    allProducts = parseCSV(text);
+    buildCategories();
+    renderProducts(allProducts);
+  } catch (e) {
+    console.warn('Google Sheets fetch failed, using demo data.', e);
+    allProducts = DEMO_PRODUCTS;
+    buildCategories();
+    renderProducts(allProducts);
+  }
 }
 
-/* ═══════════════════════════════════════════════════
-   CART
-   ═══════════════════════════════════════════════════ */
+// ─── CSV PARSER ───────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = text.trim().split('\n').slice(1); // skip header
+  return rows.map((row, i) => {
+    const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+    return {
+      id:          cols[0] || String(i + 1),
+      name:        cols[1] || 'Product',
+      category:    cols[2] || 'General',
+      price:       cols[3] || '0.00',
+      currency:    cols[4] || CONFIG.DEFAULT_CURRENCY,
+      description: cols[5] || '',
+      image:       cols[6] || '',
+      badge:       cols[7] || '',
+      stock:       cols[8] || 'In Stock',
+    };
+  }).filter(p => p.name);
+}
 
+// ─── CATEGORIES ───────────────────────────────────────────────────
+function buildCategories() {
+  const cats = ['all', ...new Set(allProducts.map(p => p.category))];
+  categoryList.innerHTML = cats.map(cat => `
+    <li>
+      <a href="#" data-category="${cat}" class="${cat === activeCategory ? 'active' : ''}">
+        ${cat === 'all' ? '✦ All Products' : '◆ ' + cat}
+      </a>
+    </li>
+  `).join('');
+  categoryList.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      setCategory(a.dataset.category);
+      closeDrawer();
+    });
+  });
+}
+
+function setCategory(cat) {
+  activeCategory = cat;
+  buildCategories();
+  applyFilters();
+  sectionTitle.textContent = cat === 'all' ? 'Our Collection' : cat;
+  sectionSub.textContent   = cat === 'all' ? 'Handpicked for you' : `Explore our ${cat} range`;
+}
+
+// ─── SEARCH ───────────────────────────────────────────────────────
+function doSearch() {
+  searchQuery = searchInput.value.trim().toLowerCase();
+  applyFilters();
+  if (searchQuery) {
+    searchBar.style.display = 'flex';
+    searchText.textContent  = `${filteredProducts.length} result${filteredProducts.length !== 1 ? 's' : ''} for "${searchInput.value.trim()}"`;
+  } else {
+    searchBar.style.display = 'none';
+  }
+}
+
+function clearSearchFn() {
+  searchInput.value = '';
+  searchQuery = '';
+  searchBar.style.display = 'none';
+  applyFilters();
+}
+
+searchBtn.addEventListener('click', doSearch);
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+clearSearch.addEventListener('click', clearSearchFn);
+
+// debounce live search
+let searchTimer;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(doSearch, 300);
+});
+
+// ─── FILTER & RENDER ─────────────────────────────────────────────
+function applyFilters() {
+  filteredProducts = allProducts.filter(p => {
+    const inCat    = activeCategory === 'all' || p.category === activeCategory;
+    const inSearch = !searchQuery ||
+      p.name.toLowerCase().includes(searchQuery) ||
+      p.description.toLowerCase().includes(searchQuery) ||
+      p.category.toLowerCase().includes(searchQuery);
+    return inCat && inSearch;
+  });
+  renderProducts(filteredProducts);
+}
+
+function renderProducts(products) {
+  if (!products.length) {
+    grid.innerHTML = '';
+    noResults.style.display = 'block';
+    return;
+  }
+  noResults.style.display = 'none';
+  grid.innerHTML = products.map((p, i) => `
+    <article class="product-card" data-id="${p.id}" style="animation-delay:${i * 0.07}s">
+      <div class="product-img-wrap">
+        ${p.image
+          ? `<img src="${p.image}" alt="${p.name}" loading="lazy" />`
+          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--pink-blush);font-size:3rem;">✦</div>`
+        }
+        ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
+      </div>
+      <div class="product-info">
+        <p class="product-category">${p.category}</p>
+        <h3 class="product-name">${p.name}</h3>
+        <p class="product-desc">${p.description}</p>
+        <div class="product-footer">
+          <span class="product-price">${p.currency || CONFIG.DEFAULT_CURRENCY} ${parseFloat(p.price).toFixed(2)}</span>
+          <button class="add-to-cart-btn" data-id="${p.id}">+ Add to Cart</button>
+        </div>
+      </div>
+    </article>
+  `).join('');
+
+  // Card click → order modal
+  grid.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.classList.contains('add-to-cart-btn')) return;
+      const p = allProducts.find(x => x.id === card.dataset.id);
+      if (p) openOrderModal(p);
+    });
+  });
+
+  // Add to cart buttons
+  grid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const p = allProducts.find(x => x.id === btn.dataset.id);
+      if (p) addToCart(p);
+    });
+  });
+}
+
+// ─── ORDER MODAL ─────────────────────────────────────────────────
+function openOrderModal(product) {
+  currentProduct = product;
+  orderForm.style.display = 'block';
+  orderSuccess.style.display = 'none';
+  orderForm.reset();
+  document.getElementById('order-qty').value = 1;
+  modalProductInfo.innerHTML = `
+    ${product.image ? `<img src="${product.image}" alt="${product.name}" />` : ''}
+    <div class="info-text">
+      <div class="name">${product.name}</div>
+      <div class="price">${product.currency || CONFIG.DEFAULT_CURRENCY} ${parseFloat(product.price).toFixed(2)}</div>
+    </div>
+  `;
+  modalOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeOrderModal() {
+  modalOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+  currentProduct = null;
+}
+
+modalClose.addEventListener('click', closeOrderModal);
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeOrderModal(); });
+successClose.addEventListener('click', () => { closeOrderModal(); });
+
+// ─── SUBMIT ORDER → GOOGLE SHEETS ────────────────────────────────
+orderForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const name    = document.getElementById('order-name').value.trim();
+  const phone   = document.getElementById('order-phone').value.trim();
+  const address = document.getElementById('order-address').value.trim();
+  if (!name || !phone || !address) { showToast('Please fill in all required fields.'); return; }
+
+  submitBtn.disabled = true;
+  submitLabel.textContent = '⏳ Placing Order…';
+
+  const orderData = {
+    timestamp:   new Date().toISOString(),
+    productId:   currentProduct.id,
+    productName: currentProduct.name,
+    category:    currentProduct.category,
+    price:       currentProduct.price,
+    currency:    currentProduct.currency || CONFIG.DEFAULT_CURRENCY,
+    quantity:    document.getElementById('order-qty').value,
+    name,
+    phone,
+    email:       document.getElementById('order-email').value.trim(),
+    address,
+    notes:       document.getElementById('order-notes').value.trim(),
+  };
+
+  try {
+    if (!CONFIG.DEMO_MODE) {
+      await fetch(CONFIG.ORDERS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+    } else {
+      // Demo: just simulate a delay
+      await new Promise(r => setTimeout(r, 800));
+      console.log('📦 Demo order (not sent to Sheets):', orderData);
+    }
+    orderForm.style.display = 'none';
+    orderSuccess.style.display = 'block';
+  } catch (err) {
+    console.error(err);
+    showToast('Order failed. Please try again.');
+  } finally {
+    submitBtn.disabled = false;
+    submitLabel.textContent = '✦ Confirm Order';
+  }
+});
+
+// ─── CART ────────────────────────────────────────────────────────
 function addToCart(product) {
-  const existing = cart.find((i) => i.id === product.id);
+  const existing = cart.find(i => i.id === product.id);
   if (existing) {
-    existing.qty++;
+    existing.qty += 1;
   } else {
     cart.push({ ...product, qty: 1 });
   }
-  renderCart();
-  showToast(`${product.name} added to cart ✓`);
+  saveCart();
+  updateCartUI();
+  showToast(`✦ ${product.name} added to cart!`);
 }
 
 function removeFromCart(id) {
-  cart = cart.filter((i) => i.id !== id);
-  renderCart();
+  cart = cart.filter(i => i.id !== id);
+  saveCart();
+  updateCartUI();
 }
 
-function cartTotal() {
-  return cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+function saveCart() {
+  localStorage.setItem('ltm_cart', JSON.stringify(cart));
 }
 
-function cartCount() {
-  return cart.reduce((sum, i) => sum + i.qty, 0);
-}
+function updateCartUI() {
+  const total = cart.reduce((s, i) => s + parseFloat(i.price) * i.qty, 0);
+  const count = cart.reduce((s, i) => s + i.qty, 0);
 
-function renderCart() {
-  const badge = $("cartBadge");
-  const items = $("drawerItems");
-  const total = $("cartTotalAmt");
-  const foot  = $("drawerFoot");
-  const count = cartCount();
+  cartCount.textContent = count;
+  cartCount.classList.toggle('visible', count > 0);
 
-  badge.textContent = count;
-  badge.style.display = count > 0 ? "inline-flex" : "none";
-  total.textContent = fmt(cartTotal());
-
-  if (cart.length === 0) {
-    items.innerHTML = `
-      <div class="empty-cart">
-        <span style="font-size:2.5rem;display:block;margin-bottom:14px">🎁</span>
-        Your cart is empty
-      </div>`;
-    foot.style.display = "none";
+  if (!cart.length) {
+    cartItems.innerHTML = '';
+    cartEmpty.style.display = 'flex';
+    cartFooter.style.display = 'none';
     return;
   }
+  cartEmpty.style.display = 'none';
+  cartFooter.style.display = 'block';
+  cartTotalEl.textContent = `${CONFIG.DEFAULT_CURRENCY} ${total.toFixed(2)}`;
 
-  foot.style.display = "block";
-  items.innerHTML = cart
-    .map(
-      (i) => `
-      <div class="cart-item">
-        <img class="ci-img" src="${safeImage(i.imageUrl)}" alt="${i.name}"/>
-        <div class="ci-info">
-          <div class="ci-name">${i.name} × ${i.qty}</div>
-          <div class="ci-price">${fmt(i.price * i.qty)}</div>
-        </div>
-        <button class="ci-remove" onclick="removeFromCart('${i.id}')">✕</button>
-      </div>`
-    )
-    .join("");
-}
-
-/* ═══════════════════════════════════════════════════
-   DRAWER / SIDEBAR / MODAL — open & close
-   ═══════════════════════════════════════════════════ */
-
-function openCart() {
-  $("cartDrawer").classList.add("active");
-  $("drawerOverlay").classList.add("active");
-}
-
-function closeCart() {
-  $("cartDrawer").classList.remove("active");
-  $("drawerOverlay").classList.remove("active");
-}
-
-function openSidebar() {
-  $("catSidebar").classList.add("active");
-  $("catOverlay").classList.add("active");
-}
-
-function closeSidebar() {
-  $("catSidebar").classList.remove("active");
-  $("catOverlay").classList.remove("active");
-}
-
-/* ═══════════════════════════════════════════════════
-   PRODUCT GRID
-   ═══════════════════════════════════════════════════ */
-
-function cardHTML(p, idx) {
-  return `
-    <div class="product-card">
-      <div class="product-img-wrap" onclick="openLightbox(${idx})">
-        <img
-          class="product-img"
-          src="${safeImage(p.imageUrl)}"
-          alt="${p.name}"
-          loading="lazy"
-          onerror="this.src='https://via.placeholder.com/600x400/fce8ee/e8708a?text=Missing'"
-        />
-        <span class="zoom-hint">⛶ VIEW</span>
+  cartItems.innerHTML = cart.map(item => `
+    <div class="cart-item">
+      ${item.image ? `<img src="${item.image}" alt="${item.name}" />` : ''}
+      <div class="cart-item-info">
+        <div class="ci-name">${item.name}</div>
+        <div class="ci-price">${item.currency || CONFIG.DEFAULT_CURRENCY} ${(parseFloat(item.price) * item.qty).toFixed(2)} (×${item.qty})</div>
       </div>
-      <div class="product-body">
-        <span class="product-category">${p.category}</span>
-        <div class="product-name">${p.name}</div>
-        <div class="product-desc">${p.description}</div>
-        <div class="product-footer">
-          <span class="product-price">${fmt(p.price)}</span>
-          <button class="add-btn" onclick='addToCart(${JSON.stringify(p)})'>+ ADD</button>
-        </div>
-      </div>
-    </div>`;
-}
+      <button class="cart-item-remove" data-id="${item.id}">✕</button>
+    </div>
+  `).join('');
 
-function getFiltered() {
-  const q = searchQuery.toLowerCase();
-  return products.filter((p) => {
-    const matchSearch =
-      !q ||
-      p.name.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q);
-    const matchFilter = activeFilter === "ALL" || p.category === activeFilter;
-    return matchSearch && matchFilter;
+  cartItems.querySelectorAll('.cart-item-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
   });
 }
 
-function renderGrid() {
-  const filtered = getFiltered();
-  lbProducts = filtered;
-
-  // Active filter pill
-  if (activeFilter !== "ALL") {
-    $("activeFilterBar").style.display = "flex";
-    $("activeFilterPill").textContent = activeFilter;
-  } else {
-    $("activeFilterBar").style.display = "none";
-  }
-
-  $("productGrid").innerHTML =
-    filtered.length === 0
-      ? `<div class="empty-state"><span>🔍</span>No products found</div>`
-      : filtered.map((p, i) => cardHTML(p, i)).join("");
-}
-
-/* ═══════════════════════════════════════════════════
-   CATEGORY SIDEBAR
-   ═══════════════════════════════════════════════════ */
-
-function renderCategories() {
-  const cats = ["ALL", ...new Set(products.map((p) => p.category))];
-  $("catList").innerHTML = cats
-    .map(
-      (c) => `
-      <div class="cat-item ${activeFilter === c ? "active" : ""}"
-           onclick="selectCategory('${c}')">
-        <span>${c}</span>
-      </div>`
-    )
-    .join("");
-}
-
-function selectCategory(cat) {
-  activeFilter = cat;
-  renderGrid();
-  renderCategories();
-  closeSidebar();
-}
-
-/* ═══════════════════════════════════════════════════
-   FEATURED CAROUSEL
-   ═══════════════════════════════════════════════════ */
-
-function renderCarousel() {
-  carouselFeatured = products.filter((p) => p.featured);
-
-  if (!carouselFeatured.length) {
-    $("carouselSection").style.display = "none";
-    return;
-  }
-
-  $("carouselSection").style.display = "block";
-  $("carouselTrack").innerHTML = carouselFeatured
-    .map(
-      (p, i) => `
-      <div class="carousel-slide">
-        <div class="product-card">
-          <div class="product-img-wrap" onclick="openCarouselLightbox(${i})">
-            <img class="product-img" src="${safeImage(p.imageUrl)}" alt="${p.name}" loading="lazy"/>
-            <span class="zoom-hint">⛶ VIEW</span>
-          </div>
-          <div class="product-body">
-            <span class="product-category">${p.category}</span>
-            <div class="product-name">${p.name}</div>
-            <div class="product-desc">${p.description}</div>
-            <div class="product-footer">
-              <span class="product-price">${fmt(p.price)}</span>
-              <button class="add-btn" onclick='addToCart(${JSON.stringify(p)})'>+ ADD</button>
-            </div>
-          </div>
-        </div>
-      </div>`
-    )
-    .join("");
-
-  carouselIdx = 0;
-  moveCarousel(0);
-}
-
-function openCarouselLightbox(idx) {
-  lbProducts = carouselFeatured;
-  openLightbox(idx);
-}
-
-function moveCarousel(dir) {
-  const track  = $("carouselTrack");
-  const slides = track.querySelectorAll(".carousel-slide");
-  if (!slides.length) return;
-
-  const visible = window.innerWidth < 600 ? 1 : 3;
-  const max     = Math.max(0, slides.length - visible);
-  carouselIdx   = Math.max(0, Math.min(carouselIdx + dir, max));
-  const slideW  = slides[0].offsetWidth + 20;
-  track.style.transform = `translateX(-${carouselIdx * slideW}px)`;
-}
-
-/* ═══════════════════════════════════════════════════
-   LIGHTBOX
-   ═══════════════════════════════════════════════════ */
-
-function openLightbox(idx) {
-  lbIndex = idx;
-  showLbProduct();
-  $("lightbox").classList.add("active");
-  document.body.style.overflow = "hidden";
-}
-
-function showLbProduct() {
-  const p = lbProducts[lbIndex];
-  if (!p) return;
-  $("lbImg").src          = safeImage(p.imageUrl);
-  $("lbName").textContent = p.name;
-  $("lbPrice").textContent = fmt(p.price);
-  $("lbAdd").onclick = () => {
-    addToCart(p);
-    closeLightbox();
-    openCart();
-  };
-}
-
-function closeLightbox() {
-  $("lightbox").classList.remove("active");
-  document.body.style.overflow = "";
-}
-
-/* ═══════════════════════════════════════════════════
-   ORDER MODAL
-   ═══════════════════════════════════════════════════ */
-
-function openModal() {
-  const total = cartTotal();
-  $("fTotal").value = fmt(total);
-  $("orderSummary").innerHTML =
-    cart
-      .map((i) => `<div>• ${i.name} × ${i.qty} — ${fmt(i.price * i.qty)}</div>`)
-      .join("") +
-    `<div style="margin-top:8px;font-weight:700;border-top:1px solid rgba(232,112,138,.2);padding-top:8px;">
-       Total: ${fmt(total)}
-     </div>`;
-  $("modalOverlay").classList.add("active");
-  document.body.style.overflow = "hidden";
-}
-
-function closeModal() {
-  $("modalOverlay").classList.remove("active");
-  document.body.style.overflow = "";
-}
-
-async function submitOrder() {
-  const name    = $("fName").value.trim();
-  const phone   = $("fPhone").value.trim();
-  const city    = $("fCity").value.trim();
-  const address = $("fAddress").value.trim();
-
-  if (!name || !phone || !city || !address) {
-    showToast("Please fill in all required fields");
-    return;
-  }
-
-  const orderRef = "DT-" + Date.now().toString(36).toUpperCase();
-  const payload  = {
-    action:        "order",
-    orderRef,
-    dateTime:      new Date().toLocaleString("en-PK"),
-    senderName:    name,
-    phone,
-    city,
-    address,
-    notes:         $("fNotes").value.trim(),
-    items:         cart.map((i) => `${i.name} x${i.qty}`).join(", "),
-    subtotal:      cartTotal(),
-    deliveryFee:   200,
-    total:         cartTotal() + 200,
-    paymentMethod: "COD",
-  };
-
-  $("submitBtn").textContent = "Placing order…";
-  $("submitBtn").disabled    = true;
-
-  try {
-    await fetch(SHEET_ORDERS_URL, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    cart = [];
-    renderCart();
-    closeModal();
-    closeCart();
-    showToast(`Order ${orderRef} placed! 🎉`);
-  } catch {
-    showToast("Order saved — check your sheet manually.");
-  } finally {
-    $("submitBtn").textContent = "Place Order →";
-    $("submitBtn").disabled    = false;
-  }
-}
-
-/* ═══════════════════════════════════════════════════
-   LOAD PRODUCTS FROM GOOGLE SHEETS
-   ═══════════════════════════════════════════════════ */
-
-async function loadProducts() {
-  try {
-    const res = await fetch(SHEET_PRODUCTS_URL);
-    if (!res.ok) throw new Error("Sheet fetch failed");
-
-    const data = await res.json();
-    products = data
-      .filter((r) => Object.keys(r).length > 0)
-      .map((r, i) => ({
-        id:          r.id || String(i + 1),
-        name:        r.name || r.title || "Unnamed Product",
-        category:    (r.category || "GENERAL").toUpperCase(),
-        description: r.description || r.desc || "No description available",
-        price:       Number(r.price) || 0,
-        imageUrl:    r.imageUrl || r.image || r.img || "",
-        featured:
-          r.featured === "TRUE" ||
-          r.featured === true  ||
-          r.featured === "true",
-      }))
-      .filter((p) => p.name && p.price >= 0);
-
-  } catch {
-    // Fallback to mock data if Sheet is unreachable
-    products = MOCK_PRODUCTS;
-  }
-
-  $("loadingMsg").style.display = "none";
-  renderGrid();
-  renderCategories();
-  renderCarousel();
-  renderCart();
-}
-
-/* ═══════════════════════════════════════════════════
-   EVENT LISTENERS
-   ═══════════════════════════════════════════════════ */
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  // Search
-  $("searchInput").addEventListener("input", (e) => {
-    searchQuery = e.target.value;
-    renderGrid();
-  });
-
-  // Cart drawer
-  $("cartBtn").addEventListener("click", openCart);
-  $("drawerClose").addEventListener("click", closeCart);
-  $("drawerOverlay").addEventListener("click", closeCart);
-
-  // Category sidebar
-  $("hamburgerBtn").addEventListener("click", openSidebar);
-  $("catClose").addEventListener("click", closeSidebar);
-  $("catOverlay").addEventListener("click", closeSidebar);
-
-  // Lightbox
-  $("lbClose").addEventListener("click", closeLightbox);
-  $("lbPrev").addEventListener("click", () => {
-    if (lbIndex > 0) { lbIndex--; showLbProduct(); }
-  });
-  $("lbNext").addEventListener("click", () => {
-    if (lbIndex < lbProducts.length - 1) { lbIndex++; showLbProduct(); }
-  });
-  $("lightbox").addEventListener("click", (e) => {
-    if (e.target === $("lightbox")) closeLightbox();
-  });
-
-  // Carousel
-  $("carouselPrev").addEventListener("click", () => moveCarousel(-1));
-  $("carouselNext").addEventListener("click", () => moveCarousel(1));
-
-  // Filter clear
-  $("clearFilterBtn").addEventListener("click", () => selectCategory("ALL"));
-
-  // Checkout & order modal
-  $("checkoutBtn").addEventListener("click", () => { closeCart(); openModal(); });
-  $("submitBtn").addEventListener("click", submitOrder);
-  $("modalCancel").addEventListener("click", closeModal);
-  $("modalOverlay").addEventListener("click", (e) => {
-    if (e.target === $("modalOverlay")) closeModal();
-  });
-
-  // Escape key closes any open panel
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeLightbox();
-      closeCart();
-      closeSidebar();
-      closeModal();
-    }
-  });
-
-  // Boot
-  loadProducts();
+cartBtn.addEventListener('click', () => {
+  cartPanel.classList.add('open');
+  drawerOverlay.classList.add('visible');
 });
+cartClose.addEventListener('click', () => {
+  cartPanel.classList.remove('open');
+  drawerOverlay.classList.remove('visible');
+});
+
+// Cart checkout → open order modal with cart summary
+cartCheckout.addEventListener('click', () => {
+  cartPanel.classList.remove('open');
+  // Create a "cart order" pseudo-product
+  const cartSummary = {
+    id: 'CART',
+    name: `Cart (${cart.reduce((s,i) => s+i.qty,0)} items)`,
+    category: 'Multiple',
+    price: cart.reduce((s,i) => s + parseFloat(i.price)*i.qty, 0).toFixed(2),
+    currency: CONFIG.DEFAULT_CURRENCY,
+    description: cart.map(i => `${i.name} ×${i.qty}`).join(', '),
+    image: cart[0]?.image || '',
+  };
+  openOrderModal(cartSummary);
+});
+
+// ─── DRAWER ──────────────────────────────────────────────────────
+function openDrawer() {
+  drawer.classList.add('open');
+  hamburgerBtn.classList.add('open');
+  drawerOverlay.classList.add('visible');
+}
+function closeDrawer() {
+  drawer.classList.remove('open');
+  hamburgerBtn.classList.remove('open');
+  if (!cartPanel.classList.contains('open')) {
+    drawerOverlay.classList.remove('visible');
+  }
+}
+hamburgerBtn.addEventListener('click', openDrawer);
+drawerClose.addEventListener('click', closeDrawer);
+drawerOverlay.addEventListener('click', () => {
+  closeDrawer();
+  cartPanel.classList.remove('open');
+  drawerOverlay.classList.remove('visible');
+});
+
+// ─── TOAST ───────────────────────────────────────────────────────
+let toastEl = null;
+function showToast(msg) {
+  if (!toastEl) {
+    toastEl = document.createElement('div');
+    toastEl.className = 'toast';
+    document.body.appendChild(toastEl);
+  }
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(() => toastEl.classList.remove('show'), 2800);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+createSparkles();
+updateCartUI();
+loadProducts();
