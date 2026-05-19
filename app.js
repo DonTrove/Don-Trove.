@@ -2,6 +2,142 @@
  * Le Trésor de Misfah — Main App
  * Handles: Products display, search, categories, cart, orders → Google Sheets
  */
+/**
+ * ╔══════════════════════════════════════════════════════════╗
+ * ║        Le Trésor de Misfah — Google Sheets Config        ║
+ * ╠══════════════════════════════════════════════════════════╣
+ * ║  HOW TO SET UP YOUR GOOGLE SHEETS INTEGRATION:          ║
+ * ║                                                          ║
+ * ║  PRODUCTS SHEET (read products from here):               ║
+ * ║  1. Create a Google Sheet with these columns in Row 1:   ║
+ * ║     A: ID  B: Name  C: Category  D: Price  E: Currency  ║
+ * ║     F: Description  G: Image URL  H: Badge  I: Stock     ║
+ * ║                                                          ║
+ * ║  2. File → Share → Publish to web → Sheet1 → CSV        ║
+ * ║     Copy the URL and paste as PRODUCTS_CSV_URL below.    ║
+ * ║                                                          ║
+ * ║  ORDERS SHEET (orders are written here):                 ║
+ * ║  3. Create a second Google Sheet (or 2nd tab).           ║
+ * ║  4. Deploy a Google Apps Script as a Web App:            ║
+ * ║     - See README.md for the script code.                 ║
+ * ║     - Paste the deployed URL as ORDERS_SCRIPT_URL below. ║
+ * ╚══════════════════════════════════════════════════════════╝
+ */
+
+const CONFIG = {
+
+  // ── PRODUCTS (Published Google Sheet CSV URL) ──────────────
+  // Replace with your own published CSV URL:
+  PRODUCTS_CSV_URL: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/pub?gid=0&single=true&output=csv',
+
+  // ── ORDERS (Google Apps Script Web App URL) ────────────────
+  // Replace with your deployed Apps Script URL:
+  ORDERS_SCRIPT_URL: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',
+
+  // ── DEMO MODE ──────────────────────────────────────────────
+  // Set to true to use demo products (no Google Sheet needed)
+  // Set to false to fetch from Google Sheets
+  DEMO_MODE: true,
+
+  // ── CURRENCY ───────────────────────────────────────────────
+  DEFAULT_CURRENCY: 'OMR',
+
+  // ── SITE INFO ──────────────────────────────────────────────
+  SITE_NAME: 'Le Trésor de Misfah',
+
+};
+
+// ── DEMO PRODUCTS (shown when DEMO_MODE = true) ────────────────
+const DEMO_PRODUCTS = [
+  {
+    id: '1',
+    name: 'Velvet Rose Oud',
+    category: 'Perfumes',
+    price: '45.00',
+    currency: 'OMR',
+    description: 'A deep, velvety blend of Omani oud and Bulgarian rose, with hints of saffron and amber.',
+    image: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80',
+    badge: 'Bestseller',
+    stock: 'In Stock',
+  },
+  {
+    id: '2',
+    name: 'Silver Moon Bracelet',
+    category: 'Jewelry',
+    price: '28.50',
+    currency: 'OMR',
+    description: 'Hand-crafted sterling silver bracelet inspired by traditional Omani filigree patterns.',
+    image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=600&q=80',
+    badge: 'New',
+    stock: 'In Stock',
+  },
+  {
+    id: '3',
+    name: 'Misfah Honey Elixir',
+    category: 'Wellness',
+    price: '18.00',
+    currency: 'OMR',
+    description: 'Pure raw honey sourced from the ancient falaj gardens of Misfah Al Abriyeen village.',
+    image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80',
+    badge: '',
+    stock: 'In Stock',
+  },
+  {
+    id: '4',
+    name: 'Desert Bloom Candle',
+    category: 'Home',
+    price: '12.00',
+    currency: 'OMR',
+    description: 'Hand-poured soy candle with a signature scent of jasmine, sandalwood and desert breeze.',
+    image: 'https://images.unsplash.com/photo-1602928298849-325cec8771c3?w=600&q=80',
+    badge: '',
+    stock: 'In Stock',
+  },
+  {
+    id: '5',
+    name: 'Golden Kohl Set',
+    category: 'Beauty',
+    price: '22.00',
+    currency: 'OMR',
+    description: 'Traditional Omani kohl in a hand-engraved brass container with applicator. Timeless beauty.',
+    image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&q=80',
+    badge: 'Limited',
+    stock: 'Low Stock',
+  },
+  {
+    id: '6',
+    name: 'Silk Prayer Shawl',
+    category: 'Textiles',
+    price: '55.00',
+    currency: 'OMR',
+    description: 'Luxurious hand-woven silk shawl with intricate geometric motifs in rose and silver.',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+    badge: '',
+    stock: 'In Stock',
+  },
+  {
+    id: '7',
+    name: 'Amber Resin Incense',
+    category: 'Perfumes',
+    price: '9.50',
+    currency: 'OMR',
+    description: 'Pure amber resin for burning — fills your space with a rich, warm, mystical fragrance.',
+    image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80',
+    badge: '',
+    stock: 'In Stock',
+  },
+  {
+    id: '8',
+    name: 'Turquoise Cuff',
+    category: 'Jewelry',
+    price: '34.00',
+    currency: 'OMR',
+    description: 'Bold sterling silver cuff set with genuine Omani turquoise, handcrafted by local artisans.',
+    image: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?w=600&q=80',
+    badge: 'Artisan',
+    stock: 'In Stock',
+  },
+];
 
 // ─── STATE ────────────────────────────────────────────────────────
 let allProducts    = [];
