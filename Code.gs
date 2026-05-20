@@ -160,12 +160,12 @@ function seedProducts() {
   sheet.appendRow(headers);
   sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
 
- // const samples = [
-   // ["P001", "Velvet Rose Oud",       "Fragrance", 3500, "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400", "A rich, velvety oud with rose heart notes.",     "BESTSELLER", "TRUE"],
-    //["P002", "Crystal Moon Necklace", "Jewellery", 2800, "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400", "Delicate crystal pendant on 18k gold chain.",    "NEW",        "TRUE"],
-    //["P003", "Desert Bloom Candle",   "Home",      1200, "https://images.unsplash.com/photo-1603905935680-0cdc3d62f0aa?w=400", "Hand-poured soy candle with jasmine & amber.",   "",           "TRUE"],
-    //["P004", "Silk Heritage Scarf",   "Fashion",   4200, "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=400", "Pure silk scarf inspired by Arabian textiles.",  "NEW",        "TRUE"],
-  //];
+  const samples = [
+    ["P001", "Velvet Rose Oud",       "Fragrance", 3500, "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400", "A rich, velvety oud with rose heart notes.",     "BESTSELLER", "TRUE"],
+    ["P002", "Crystal Moon Necklace", "Jewellery", 2800, "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400", "Delicate crystal pendant on 18k gold chain.",    "NEW",        "TRUE"],
+    ["P003", "Desert Bloom Candle",   "Home",      1200, "https://images.unsplash.com/photo-1603905935680-0cdc3d62f0aa?w=400", "Hand-poured soy candle with jasmine & amber.",   "",           "TRUE"],
+    ["P004", "Silk Heritage Scarf",   "Fashion",   4200, "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=400", "Pure silk scarf inspired by Arabian textiles.",  "NEW",        "TRUE"],
+  ];
 
   samples.forEach(row => sheet.appendRow(row));
   SpreadsheetApp.flush();
