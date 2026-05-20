@@ -19,7 +19,7 @@
  */
 
 // ── CONFIG ─────────────────────────────────────────────
-const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; // ← Replace this!
+const SPREADSHEET_ID = '1l1pIsSdVIbbu0AEEEJvDhlhinA4nGimT-ZSBGX0oLbY'; // ← Replace this!
 const PRODUCTS_SHEET = 'Products';
 const ORDERS_SHEET   = 'Orders';
 // ───────────────────────────────────────────────────────
