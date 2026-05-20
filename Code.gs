@@ -1,173 +1,121 @@
-// ============================================================
-//  Le Trésor de Misfah — Google Apps Script Backend
-//  Code.gs
-// ============================================================
-
-// ── CONFIGURATION ────────────────────────────────────────────
-const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
-const ORDERS_SHEET   = "Orders";
-const PRODUCTS_SHEET = "Products";
-
-// ── WEB APP ENTRY POINTS ─────────────────────────────────────
-
-function doGet(e) {
-  return HtmlService
-    .createTemplateFromFile("index")
-    .evaluate()
-    .setTitle("Le Trésor de Misfah")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
-    .addMetaTag("viewport", "width=device-width, initial-scale=1");
-}
-
-function doPost(e) {
-  try {
-    const data   = JSON.parse(e.postData.contents);
-    const result = processOrder(data);
-    return ContentService
-      .createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ success: false, error: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// ── INCLUDE HELPER (for CSS partials) ────────────────────────
-
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
-// ── PRODUCTS ─────────────────────────────────────────────────
-
 /**
- * Returns all active products from the Products sheet.
- * Expected columns (row 1 = headers):
- *   A: ID | B: Name | C: Category | D: Price (PKR) | E: Image URL
- *   F: Description | G: Badge (BESTSELLER / NEW / empty) | H: Active (TRUE/FALSE)
+ * Don Trove — Google Apps Script Backend
+ * =========================================
+ * File: Code.gs
+ *
+ * SETUP INSTRUCTIONS:
+ * 1. Go to https://script.google.com and create a new project.
+ * 2. Paste this entire file into the editor.
+ * 3. Update SPREADSHEET_ID below with your Google Sheet ID.
+ * 4. Deploy → New deployment → Web app
+ *    - Execute as: Me
+ *    - Who has access: Anyone
+ * 5. Copy the deployment URL and paste it into js/app.js → CONFIG.SHEET_URL
+ *
+ * SHEET STRUCTURE:
+ * The script auto-creates two sheets on first run:
+ *   - "Products"  → Name | Price | Description | Image URL | Category | Active
+ *   - "Orders"    → All order fields
  */
-function getProducts() {
+
+// ── CONFIG ─────────────────────────────────────────────
+const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; // ← Replace this!
+const PRODUCTS_SHEET = 'Products';
+const ORDERS_SHEET   = 'Orders';
+// ───────────────────────────────────────────────────────
+
+function getSpreadsheet() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
+// ══ GET — returns active products as JSON ══════════════
+// Columns: Name(0) | Price(1) | Description(2) | Image URL(3) | Category(4) | Active(5)
+function doGet(e) {
   try {
-    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(PRODUCTS_SHEET);
+    const ss    = getSpreadsheet();
+    let sheet   = ss.getSheetByName(PRODUCTS_SHEET);
 
-    if (!sheet) return { success: false, error: "Products sheet not found" };
+    // Auto-create Products sheet with headers if missing
+    if (!sheet) {
+      sheet = ss.insertSheet(PRODUCTS_SHEET);
+      sheet.appendRow(['Name', 'Price', 'Description', 'Image URL', 'Category', 'Active']);
+      sheet.setFrozenRows(1);
+      return jsonResponse([]);
+    }
 
-    const rows = sheet.getDataRange().getValues();
-    if (rows.length < 2) return { success: true, products: [] };
+    const data = sheet.getDataRange().getValues();
 
-    const headers = rows[0].map(h => String(h).trim().toLowerCase());
-    const idxOf   = key => headers.indexOf(key);
+    // Support both old layout (5 cols, Active at index 4)
+    // and new layout (6 cols, Category at index 4, Active at index 5)
+    const hasCategory = data[0].length >= 6;
 
-    const iId    = idxOf("id");
-    const iName  = idxOf("name");
-    const iCat   = idxOf("category");
-    const iPrice = idxOf("price (pkr)");
-    const iImg   = idxOf("image url");
-    const iDesc  = idxOf("description");
-    const iBadge = idxOf("badge");
-    const iAct   = idxOf("active");
-
-    const products = rows.slice(1)
-      .filter(r => iAct === -1 || String(r[iAct]).toUpperCase() === "TRUE")
-      .map(r => ({
-        id:          r[iId]    || "",
-        name:        r[iName]  || "",
-        category:    r[iCat]   || "General",
-        price:       Number(r[iPrice]) || 0,
-        imageUrl:    r[iImg]   || "",
-        description: r[iDesc]  || "",
-        badge:       r[iBadge] || ""
+    const products = data
+      .slice(1)
+      .filter(row => {
+        const activeVal = hasCategory ? row[5] : row[4];
+        return String(activeVal).toUpperCase() === 'YES' && row[0];
+      })
+      .map(row => ({
+        name:        row[0],
+        price:       row[1],
+        description: row[2],
+        imageUrl:    row[3],
+        category:    hasCategory ? String(row[4]).trim() : '',
       }));
 
-    return { success: true, products };
+    return jsonResponse(products);
   } catch (err) {
-    return { success: false, error: err.message };
+    return jsonResponse({ error: err.message });
   }
 }
 
-// ── ORDERS ───────────────────────────────────────────────────
-
-/**
- * Writes a new order row to the Orders sheet.
- * order = {
- *   name, phone, city, address, paymentMethod, notes,
- *   items: [{ id, name, price, qty }]
- * }
- */
-function processOrder(order) {
+// ══ POST — records a new order ════════════════════════
+function doPost(e) {
   try {
-    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let   sheet = ss.getSheetByName(ORDERS_SHEET);
+    const payload = JSON.parse(e.postData.contents);
+    const ss      = getSpreadsheet();
+    let sheet     = ss.getSheetByName(ORDERS_SHEET);
 
-    // Create sheet + header row if missing
+    // Auto-create Orders sheet with headers if missing
     if (!sheet) {
       sheet = ss.insertSheet(ORDERS_SHEET);
       sheet.appendRow([
-        "Timestamp", "Order Ref", "Name", "Phone", "City", "Address",
-        "Items", "Subtotal (PKR)", "Delivery Fee (PKR)", "Total (PKR)",
-        "Payment Method", "Notes"
+        'Order Ref', 'Date/Time', 'Sender Name', 'Phone', 'Email',
+        'Recipient Name', 'Delivery Address', 'Delivery Date', 'Occasion',
+        'Gift Message', 'Items', 'Subtotal (PKR)', 'Gift Wrap',
+        'Delivery Fee (PKR)', 'Total (PKR)', 'Payment Method',
       ]);
-      sheet.getRange(1, 1, 1, 12).setFontWeight("bold");
+      sheet.setFrozenRows(1);
     }
 
-    const ref        = "ORD-" + Date.now();
-    const itemsSummary = order.items
-      .map(i => `${i.name} x${i.qty}`)
-      .join(", ");
-    const subtotal   = order.items.reduce((s, i) => s + i.price * i.qty, 0);
-    const delivery   = subtotal > 0 ? 200 : 0;   // flat PKR 200 delivery fee
-    const total      = subtotal + delivery;
-
     sheet.appendRow([
-      new Date(),
-      ref,
-      order.name        || "",
-      order.phone       || "",
-      order.city        || "",
-      order.address     || "",
-      itemsSummary,
-      subtotal,
-      delivery,
-      total,
-      order.paymentMethod || "",
-      order.notes         || ""
+      payload.orderRef,
+      payload.dateTime,
+      payload.senderName,
+      payload.phone,
+      payload.email,
+      payload.recipientName,
+      payload.address,
+      payload.deliveryDate,
+      payload.occasion,
+      payload.giftMessage,
+      payload.items,
+      payload.subtotal,
+      payload.giftWrap,
+      payload.deliveryFee,
+      payload.total,
+      payload.paymentMethod,
     ]);
 
-    return { success: true, orderRef: ref, total };
+    return jsonResponse({ success: true, orderRef: payload.orderRef });
   } catch (err) {
-    return { success: false, error: err.message };
+    return jsonResponse({ error: err.message });
   }
 }
 
-// ── UTILITY: seed sample products (run once from Apps Script IDE) ──
-
-function seedProducts() {
-  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let   sheet = ss.getSheetByName(PRODUCTS_SHEET);
-
-  if (!sheet) {
-    sheet = ss.insertSheet(PRODUCTS_SHEET);
-  } else {
-    sheet.clearContents();
-  }
-
-  const headers = [
-    "ID", "Name", "Category", "Price (PKR)", "Image URL",
-    "Description", "Badge", "Active"
-  ];
-  sheet.appendRow(headers);
-  sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
-
-  const samples = [
-    ["P001", "Velvet Rose Oud",       "Fragrance", 3500, "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=400", "A rich, velvety oud with rose heart notes.",     "BESTSELLER", "TRUE"],
-    ["P002", "Crystal Moon Necklace", "Jewellery", 2800, "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400", "Delicate crystal pendant on 18k gold chain.",    "NEW",        "TRUE"],
-    ["P003", "Desert Bloom Candle",   "Home",      1200, "https://images.unsplash.com/photo-1603905935680-0cdc3d62f0aa?w=400", "Hand-poured soy candle with jasmine & amber.",   "",           "TRUE"],
-    ["P004", "Silk Heritage Scarf",   "Fashion",   4200, "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=400", "Pure silk scarf inspired by Arabian textiles.",  "NEW",        "TRUE"],
-  ];
-
-  samples.forEach(row => sheet.appendRow(row));
-  SpreadsheetApp.flush();
-  Logger.log("Products seeded successfully.");
+// ══ Helper ════════════════════════════════════════════
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
