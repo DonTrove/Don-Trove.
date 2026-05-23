@@ -8,10 +8,14 @@
  * 2. Deploy → New deployment → Web app
  *    - Execute as: Me
  *    - Who has access: Anyone
- * 3. Copy the deployment URL → paste into App.js as SCRIPT_URL
+ * 3. Copy the deployment URL → paste into App.js as SHEET_URL
  *
  * SHEET STRUCTURE:
  *   Products sheet  → Name | Price | Description | Image URL | Category | Active
+ *
+ *   Image URL column supports MULTIPLE images — separate with commas:
+ *   e.g.  https://i.ibb.co/img1.jpg,https://i.ibb.co/img2.jpg,https://i.ibb.co/img3.jpg
+ *
  *   Orders sheet    → Order Ref | Date/Time | Sender Name | Phone | Email |
  *                     Recipient Name | Delivery Address | Delivery Date | Occasion |
  *                     Gift Message | Items | Subtotal (PKR) | Gift Wrap |
@@ -27,8 +31,9 @@ function getSpreadsheet() {
 }
 
 // ══ doGet — returns active products as JSON ════════════════════════════════
-// Returns lowercase keys: { name, price, description, imageUrl, category }
-// This matches what App.js expects (p.name, p.price, p.imageUrl, p.category)
+// Returns: { name, price, description, imageUrl, images[], category }
+// imageUrl  = first image (backwards-compatible)
+// images    = array of all images parsed from comma-separated cell
 function doGet(e) {
   try {
     const ss    = getSpreadsheet();
@@ -42,11 +47,10 @@ function doGet(e) {
     }
 
     const rows = sheet.getDataRange().getValues();
-    if (rows.length <= 1) return jsonResponse([]); // only header
+    if (rows.length <= 1) return jsonResponse([]);
 
     const headers = rows[0].map(h => String(h).trim().toLowerCase());
 
-    // Find column indexes by header name (robust to column reordering)
     const col = {
       name:        headers.indexOf('name'),
       price:       headers.indexOf('price'),
@@ -63,13 +67,23 @@ function doGet(e) {
         const hasName   = col.name >= 0 && String(row[col.name]).trim() !== '';
         return hasName && String(activeVal).toUpperCase() === 'YES';
       })
-      .map(row => ({
-        name:        col.name        >= 0 ? String(row[col.name]).trim()        : '',
-        price:       col.price       >= 0 ? Number(row[col.price])              : 0,
-        description: col.description >= 0 ? String(row[col.description]).trim() : '',
-        imageUrl:    col.imageUrl    >= 0 ? String(row[col.imageUrl]).trim()    : '',
-        category:    col.category    >= 0 ? String(row[col.category]).trim()    : '',
-      }));
+      .map(row => {
+        // Parse comma-separated image URLs from the single "Image URL" cell
+        const rawImages = col.imageUrl >= 0 ? String(row[col.imageUrl]).trim() : '';
+        const images    = rawImages
+          .split(',')
+          .map(u => u.trim())
+          .filter(u => u.length > 0);
+
+        return {
+          name:        col.name        >= 0 ? String(row[col.name]).trim()        : '',
+          price:       col.price       >= 0 ? Number(row[col.price])              : 0,
+          description: col.description >= 0 ? String(row[col.description]).trim() : '',
+          imageUrl:    images[0] || '',   // first image — keeps old code working
+          images:      images,            // full array for carousel
+          category:    col.category    >= 0 ? String(row[col.category]).trim()    : '',
+        };
+      });
 
     return jsonResponse(products);
 
@@ -79,7 +93,6 @@ function doGet(e) {
 }
 
 // ══ doPost — records a new order ══════════════════════════════════════════
-// App.js sends: JSON.stringify(payload) in the POST body
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
@@ -125,8 +138,7 @@ function doPost(e) {
 
 // ══ Helper ════════════════════════════════════════════════════════════════
 function jsonResponse(data) {
-  const output = ContentService
+  return ContentService
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
-  return output;
 }
