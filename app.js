@@ -21,7 +21,22 @@ document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
   renderCart();
   updateCartBadge();
+
+  // Close category dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    const btn = document.getElementById("hamburgerBtn");
+    const dd  = document.getElementById("catDropdown");
+    if (dd && btn && !btn.contains(e.target) && !dd.contains(e.target)) {
+      dd.classList.remove("open");
+    }
+  });
 });
+
+// ── Hamburger Menu Toggle ─────────────────────────────────────────────────────
+function toggleCatMenu() {
+  const dd = document.getElementById("catDropdown");
+  if (dd) dd.classList.toggle("open");
+}
 
 // ── Load Products from Apps Script ───────────────────────────────────────────
 async function loadProducts() {
@@ -29,12 +44,9 @@ async function loadProducts() {
   grid.innerHTML = `<div class="loading-wrap"><div class="spinner"></div><p>Loading beautiful gifts…</p></div>`;
 
   try {
-    // Append timestamp to bust cache
     const res  = await fetch(`${CONFIG.SHEET_URL}?t=${Date.now()}`);
     const data = await res.json();
 
-    // Script returns array of objects with lowercase keys:
-    // { name, price, description, imageUrl, category }
     allProducts = Array.isArray(data) ? data : (data.products || []);
 
     if (allProducts.length === 0) {
@@ -69,6 +81,9 @@ function buildCategoryTabs() {
       activeCategory = cat;
       document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+      // Close dropdown after selecting
+      const dd = document.getElementById("catDropdown");
+      if (dd) dd.classList.remove("open");
       renderProducts();
     };
     tabsRow.appendChild(btn);
@@ -128,7 +143,7 @@ function filterProducts() {
 
 // ── Cart ──────────────────────────────────────────────────────────────────────
 function getProductByGridIndex(i) {
-  const query    = (document.getElementById("searchInput")?.value || "").toLowerCase();
+  const query = (document.getElementById("searchInput")?.value || "").toLowerCase();
   return allProducts.filter(p => {
     const matchCat    = activeCategory === "All" || p.category === activeCategory;
     const matchSearch = !query ||
@@ -239,12 +254,10 @@ function updateSummary() {
   if (el("summDelivery"))  el("summDelivery").textContent  = `PKR ${CONFIG.DELIVERY_FEE}`;
   if (el("summTotal"))     el("summTotal").textContent     = `PKR ${total.toLocaleString()}`;
 
-  // Also update checkout sidebar
   if (el("co-subtotal")) el("co-subtotal").textContent = `PKR ${subtotal.toLocaleString()}`;
   if (el("co-wrap"))     el("co-wrap").textContent     = wrapFee ? `PKR ${wrapFee}` : "—";
   if (el("co-total"))    el("co-total").textContent    = `PKR ${total.toLocaleString()}`;
 
-  // Populate checkout items list
   const coList = el("checkoutItemsList");
   if (coList) {
     coList.innerHTML = cart.map(item => `
@@ -327,15 +340,13 @@ async function placeOrder() {
   try {
     await fetch(CONFIG.SHEET_URL, {
       method:  "POST",
-      // no-cors because Apps Script doesn't return CORS headers on POST
       mode:    "no-cors",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(payload),
     });
 
-    // Show success
     document.getElementById("successRef").textContent = orderRef;
-    cart  = [];
+    cart     = [];
     giftWrap = false;
     updateCartBadge();
     showView("success");
@@ -354,7 +365,6 @@ function showView(name) {
   const target = document.getElementById(`view-${name}`);
   if (target) target.classList.add("active");
 
-  // Update nav active state
   document.querySelectorAll(".nav-btn:not(.cart-btn)").forEach(b => b.classList.remove("active"));
 
   if (name === "cart") renderCart();
@@ -370,7 +380,6 @@ function resetAll() {
   document.querySelectorAll(".payment-opt").forEach((o, i) => {
     o.classList.toggle("selected", i === 0);
   });
-  // Clear form
   ["senderName","phone","email","recipientName","address","deliveryDate","occasion","giftMessage"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
 
@@ -385,7 +394,7 @@ function showToast(msg, isError = false) {
   const toast = document.getElementById("toast");
   if (!toast) return;
   toast.textContent = msg;
-  toast.style.borderLeftColor = isError ? "#c0392b" : "var(--gold)";
+  toast.style.borderLeftColor = isError ? "#c0392b" : "var(--gold-light)";
   toast.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
