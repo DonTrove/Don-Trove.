@@ -1,26 +1,24 @@
 /**
  * Don Trove — app.js
- * Fetches products from Google Apps Script and handles cart + orders.
- * Supports multi-image carousel via comma-separated Image URL column.
+ * Multi-image carousel | Color swatches | Full-height product image
  */
 
 const CONFIG = {
-  SHEET_URL:    "https://script.google.com/macros/s/AKfycbxJKLAxbF62_C7dlj0tv9goUFcqsqAFrkjvQVtI0CgLxIUcF_2DNcfSoa7ov1_DldT5Ow/exec",
+  SHEET_URL:    "https://script.google.com/macros/s/AKfycbwdLxaq6fbvbTM2yNtUl0mOaodAUebJZZBdFxFaVbiXXhP3vept-ojDtcZJMkLFUwfJ1Q/exec",
   DELIVERY_FEE: 200,
   GIFT_WRAP:    300,
 };
 
-// ── State ────────────────────────────────────────────────────────────────────
 let allProducts    = [];
 let cart           = [];
 let activeCategory = "All";
 let giftWrap       = false;
 let selectedPayment= "Cash on Delivery";
 
-// Tracks current slide index per product card: { productName: index }
+// Carousel state: keyed by numeric product index (safe, no special chars)
 const carouselState = {};
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
   renderCart();
@@ -35,10 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// ── Hamburger Menu Toggle ─────────────────────────────────────────────────────
 function toggleCatMenu() {
-  const dd = document.getElementById("catDropdown");
-  if (dd) dd.classList.toggle("open");
+  document.getElementById("catDropdown")?.classList.toggle("open");
 }
 
 // ── Load Products ─────────────────────────────────────────────────────────────
@@ -49,19 +45,17 @@ async function loadProducts() {
   try {
     const res  = await fetch(`${CONFIG.SHEET_URL}?t=${Date.now()}`);
     const data = await res.json();
-
     allProducts = Array.isArray(data) ? data : (data.products || []);
 
     if (allProducts.length === 0) {
-      grid.innerHTML = `<p style="text-align:center;color:var(--muted);padding:60px 20px;grid-column:1/-1;">No products found. Add some in your Google Sheet!</p>`;
+      grid.innerHTML = `<p style="text-align:center;color:var(--muted);padding:60px 20px;grid-column:1/-1;">No products found.</p>`;
       return;
     }
 
     buildCategoryTabs();
     renderProducts();
-
   } catch (err) {
-    console.error("Failed to load products:", err);
+    console.error(err);
     grid.innerHTML = `
       <div class="loading-wrap" style="grid-column:1/-1">
         <p style="color:#c0392b;margin-bottom:16px;">⚠️ Could not load products.<br/><small>${err.message}</small></p>
@@ -84,15 +78,14 @@ function buildCategoryTabs() {
       activeCategory = cat;
       document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      const dd = document.getElementById("catDropdown");
-      if (dd) dd.classList.remove("open");
+      document.getElementById("catDropdown")?.classList.remove("open");
       renderProducts();
     };
     tabsRow.appendChild(btn);
   });
 }
 
-// ── Render Product Grid ───────────────────────────────────────────────────────
+// ── Render Products ───────────────────────────────────────────────────────────
 function renderProducts() {
   const query  = (document.getElementById("searchInput")?.value || "").toLowerCase();
   const grid   = document.getElementById("productsGrid");
@@ -111,116 +104,142 @@ function renderProducts() {
   }
 
   grid.innerHTML = filtered.map((p, i) => {
-    // Normalise images array — support both old (imageUrl string) and new (images array)
+    // ── Images: parse comma-separated or use images array ──
     const images = (p.images && p.images.length > 0)
       ? p.images
-      : (p.imageUrl ? [p.imageUrl] : []);
+      : (p.imageUrl ? p.imageUrl.split(',').map(u => u.trim()).filter(Boolean) : []);
 
-    const key = escHtml(p.name);
+    // Use numeric index as carousel key — safe for DOM ids
+    const carKey = `prod-${i}`;
+    carouselState[carKey] = 0;
 
-    // Initialise carousel state for this product
-    if (carouselState[p.name] === undefined) carouselState[p.name] = 0;
+    const hasMany = images.length > 1;
 
-    const hasMultiple = images.length > 1;
+    const slides = images.map((url, si) => `
+      <img
+        src="${escHtml(url)}"
+        alt="${escHtml(p.name)} ${si + 1}"
+        class="carousel-slide${si === 0 ? ' active' : ''}"
+        loading="lazy"
+        onerror="this.style.display='none'"
+      />`).join("");
 
-    const imgSlides = images.length > 0
-      ? images.map((url, si) => `
-          <img
-            src="${escHtml(url)}"
-            alt="${escHtml(p.name)} image ${si + 1}"
-            class="carousel-slide${si === 0 ? ' active' : ''}"
-            loading="lazy"
-            onerror="this.style.display='none'"
-          />`).join("")
-      : "";
+    const arrows = hasMany ? `
+      <button class="carousel-arrow carousel-prev" onclick="event.stopPropagation();moveSlide('${carKey}',-1)">&#8249;</button>
+      <button class="carousel-arrow carousel-next" onclick="event.stopPropagation();moveSlide('${carKey}',1)">&#8250;</button>` : "";
 
-    const dots = hasMultiple
-      ? `<div class="carousel-dots">
-          ${images.map((_, di) => `
-            <span
-              class="carousel-dot${di === 0 ? ' active' : ''}"
-              onclick="event.stopPropagation();goToSlide('${key}',${di})"
-            ></span>`).join("")}
-        </div>`
-      : "";
+    const dots = hasMany ? `
+      <div class="carousel-dots">
+        ${images.map((_, di) => `
+          <span class="carousel-dot${di === 0 ? ' active' : ''}"
+            onclick="event.stopPropagation();goToSlide('${carKey}',${di})"></span>
+        `).join("")}
+      </div>` : "";
 
-    const arrows = hasMultiple
-      ? `<button class="carousel-arrow carousel-prev" onclick="event.stopPropagation();moveSlide('${key}',-1)">‹</button>
-         <button class="carousel-arrow carousel-next" onclick="event.stopPropagation();moveSlide('${key}',1)">›</button>`
-      : "";
+    // ── Colors: parse comma-separated color values ──
+    const colorSwatches = buildColorSwatches(p.colors || p.color || "", i);
 
     return `
       <div class="product-card" style="animation-delay:${i * 0.06}s">
-        <div class="product-img-wrap" id="carousel-${key}">
-          ${imgSlides}
-          ${images.length === 0 ? `<div class="product-img-placeholder">🎁</div>` : ""}
+        <div class="product-img-wrap" id="${carKey}">
+          ${images.length > 0 ? slides : `<div class="product-img-placeholder">🎁</div>`}
           ${arrows}
           ${dots}
         </div>
         <div class="product-body">
-          ${p.category ? `<div style="font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">${escHtml(p.category)}</div>` : ""}
+          ${p.category ? `<div class="product-category-tag">${escHtml(p.category)}</div>` : ""}
           <div class="product-name">${escHtml(p.name)}</div>
           ${p.description ? `<div class="product-desc">${escHtml(p.description)}</div>` : ""}
+          ${colorSwatches}
           <div class="product-footer">
             <span class="product-price">PKR ${Number(p.price).toLocaleString()}</span>
-            <button class="add-btn" onclick="addToCart(${i})">+ Add to Cart</button>
+            <button class="add-btn" onclick="addToCart(${i}, this)">+ Add to Cart</button>
           </div>
         </div>
       </div>`;
   }).join("");
 }
 
-// ── Carousel Controls ─────────────────────────────────────────────────────────
+// ── Color Swatches ────────────────────────────────────────────────────────────
+function buildColorSwatches(colorStr, productIndex) {
+  if (!colorStr || !String(colorStr).trim()) return "";
 
-/**
- * Move slide by delta (+1 next, -1 prev) for a given product key.
- */
-function moveSlide(key, delta) {
-  const wrap = document.getElementById(`carousel-${key}`);
-  if (!wrap) return;
+  const colors = String(colorStr).split(",").map(c => c.trim()).filter(Boolean);
+  if (colors.length === 0) return "";
 
-  const slides = wrap.querySelectorAll(".carousel-slide");
-  const dots   = wrap.querySelectorAll(".carousel-dot");
-  if (slides.length === 0) return;
+  const swatches = colors.map((c, ci) => {
+    // Support named colors or hex codes
+    const style = `background:${c};`;
+    return `<span
+      class="color-swatch${ci === 0 ? ' selected' : ''}"
+      style="${style}"
+      title="${escHtml(c)}"
+      onclick="selectColor(this, ${productIndex}, '${escHtml(c)}')"
+    ></span>`;
+  }).join("");
 
-  let current = carouselState[key] || 0;
-  slides[current].classList.remove("active");
-  if (dots[current]) dots[current].classList.remove("active");
-
-  current = (current + delta + slides.length) % slides.length;
-  carouselState[key] = current;
-
-  slides[current].classList.add("active");
-  if (dots[current]) dots[current].classList.add("active");
+  return `
+    <div class="color-picker">
+      <div class="color-picker-label">Colour:</div>
+      <div class="color-swatches" id="swatches-${productIndex}">${swatches}</div>
+      <div class="color-selected-name" id="color-name-${productIndex}">${escHtml(colors[0])}</div>
+    </div>`;
 }
 
-/**
- * Jump directly to a specific slide index.
- */
-function goToSlide(key, index) {
-  const wrap = document.getElementById(`carousel-${key}`);
-  if (!wrap) return;
+// Track selected colors per product
+const selectedColors = {};
 
+function selectColor(el, productIndex, color) {
+  selectedColors[productIndex] = color;
+  // Update swatch highlight
+  const wrap = document.getElementById(`swatches-${productIndex}`);
+  if (wrap) wrap.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
+  el.classList.add("selected");
+  // Update label
+  const label = document.getElementById(`color-name-${productIndex}`);
+  if (label) label.textContent = color;
+}
+
+// ── Carousel Controls ─────────────────────────────────────────────────────────
+function moveSlide(carKey, delta) {
+  const wrap = document.getElementById(carKey);
+  if (!wrap) return;
   const slides = wrap.querySelectorAll(".carousel-slide");
   const dots   = wrap.querySelectorAll(".carousel-dot");
-  if (slides.length === 0) return;
+  if (!slides.length) return;
 
-  const current = carouselState[key] || 0;
-  slides[current].classList.remove("active");
-  if (dots[current]) dots[current].classList.remove("active");
+  let cur = carouselState[carKey] || 0;
+  slides[cur].classList.remove("active");
+  if (dots[cur]) dots[cur].classList.remove("active");
 
-  carouselState[key] = index;
+  cur = (cur + delta + slides.length) % slides.length;
+  carouselState[carKey] = cur;
+
+  slides[cur].classList.add("active");
+  if (dots[cur]) dots[cur].classList.add("active");
+}
+
+function goToSlide(carKey, index) {
+  const wrap = document.getElementById(carKey);
+  if (!wrap) return;
+  const slides = wrap.querySelectorAll(".carousel-slide");
+  const dots   = wrap.querySelectorAll(".carousel-dot");
+  if (!slides.length) return;
+
+  const cur = carouselState[carKey] || 0;
+  slides[cur].classList.remove("active");
+  if (dots[cur]) dots[cur].classList.remove("active");
+
+  carouselState[carKey] = index;
   slides[index].classList.add("active");
   if (dots[index]) dots[index].classList.add("active");
 }
 
 // ── Search ────────────────────────────────────────────────────────────────────
-function filterProducts() {
-  renderProducts();
-}
+function filterProducts() { renderProducts(); }
 
 // ── Cart ──────────────────────────────────────────────────────────────────────
-function getProductByGridIndex(i) {
+function getFilteredProduct(i) {
   const query = (document.getElementById("searchInput")?.value || "").toLowerCase();
   return allProducts.filter(p => {
     const matchCat    = activeCategory === "All" || p.category === activeCategory;
@@ -231,30 +250,28 @@ function getProductByGridIndex(i) {
   })[i];
 }
 
-function addToCart(gridIndex) {
-  const product = getProductByGridIndex(gridIndex);
+function addToCart(gridIndex, btn) {
+  const product = getFilteredProduct(gridIndex);
   if (!product) return;
 
-  const existing = cart.find(c => c.name === product.name);
+  const chosenColor = selectedColors[gridIndex] || null;
+  const cartKey     = product.name + (chosenColor ? `|${chosenColor}` : "");
+  const existing    = cart.find(c => c._cartKey === cartKey);
+
   if (existing) {
     existing.qty++;
   } else {
-    cart.push({ ...product, qty: 1 });
+    cart.push({ ...product, qty: 1, chosenColor, _cartKey: cartKey });
   }
 
   updateCartBadge();
   showToast(`🎁 "${product.name}" added to cart`);
 
-  const btns = document.querySelectorAll(".add-btn");
-  if (btns[gridIndex]) {
-    const btn = btns[gridIndex];
+  if (btn) {
     const orig = btn.textContent;
     btn.textContent = "✓ Added";
     btn.style.background = "linear-gradient(135deg,#1A7A4A,#27ae60)";
-    setTimeout(() => {
-      btn.textContent = orig;
-      btn.style.background = "";
-    }, 1200);
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ""; }, 1200);
   }
 }
 
@@ -291,6 +308,7 @@ function renderCart() {
       </div>
       <div class="cart-item-info">
         <div class="cart-item-name">${escHtml(item.name)}</div>
+        ${item.chosenColor ? `<div class="cart-item-color"><span class="cart-color-dot" style="background:${escHtml(item.chosenColor)}"></span>${escHtml(item.chosenColor)}</div>` : ""}
         <div class="cart-item-price">PKR ${Number(item.price).toLocaleString()} each</div>
         <div class="qty-ctrl">
           <button class="qty-btn" onclick="changeQty(${i}, -1)">−</button>
@@ -330,17 +348,16 @@ function updateSummary() {
   if (el("summSubtotal")) el("summSubtotal").textContent = `PKR ${subtotal.toLocaleString()}`;
   if (el("summDelivery"))  el("summDelivery").textContent  = `PKR ${CONFIG.DELIVERY_FEE}`;
   if (el("summTotal"))     el("summTotal").textContent     = `PKR ${total.toLocaleString()}`;
-
-  if (el("co-subtotal")) el("co-subtotal").textContent = `PKR ${subtotal.toLocaleString()}`;
-  if (el("co-wrap"))     el("co-wrap").textContent     = wrapFee ? `PKR ${wrapFee}` : "—";
-  if (el("co-total"))    el("co-total").textContent    = `PKR ${total.toLocaleString()}`;
+  if (el("co-subtotal"))   el("co-subtotal").textContent   = `PKR ${subtotal.toLocaleString()}`;
+  if (el("co-wrap"))       el("co-wrap").textContent       = wrapFee ? `PKR ${wrapFee}` : "—";
+  if (el("co-total"))      el("co-total").textContent      = `PKR ${total.toLocaleString()}`;
 
   const coList = el("checkoutItemsList");
   if (coList) {
     coList.innerHTML = cart.map(item => `
       <div class="checkout-item-row">
         <div>
-          <div class="checkout-item-name">${escHtml(item.name)}</div>
+          <div class="checkout-item-name">${escHtml(item.name)}${item.chosenColor ? ` <span style="font-size:0.75rem;color:var(--muted)">(${escHtml(item.chosenColor)})</span>` : ""}</div>
           <div class="checkout-item-qty">×${item.qty}</div>
         </div>
         <div class="checkout-item-price">PKR ${(Number(item.price) * item.qty).toLocaleString()}</div>
@@ -350,10 +367,7 @@ function updateSummary() {
 }
 
 document.addEventListener("change", e => {
-  if (e.target.id === "giftWrapCheck") {
-    giftWrap = e.target.checked;
-    updateSummary();
-  }
+  if (e.target.id === "giftWrapCheck") { giftWrap = e.target.checked; updateSummary(); }
 });
 
 // ── Checkout ──────────────────────────────────────────────────────────────────
@@ -371,21 +385,16 @@ function selectPayment(el, method) {
 
 async function placeOrder() {
   const val = id => (document.getElementById(id)?.value || "").trim();
-
-  const senderName    = val("senderName");
-  const phone         = val("phone");
-  const recipientName = val("recipientName");
-  const address       = val("address");
-  const deliveryDate  = val("deliveryDate");
+  const senderName = val("senderName"), phone = val("phone"),
+        recipientName = val("recipientName"), address = val("address"),
+        deliveryDate = val("deliveryDate");
 
   if (!senderName || !phone || !recipientName || !address || !deliveryDate) {
-    showToast("⚠️ Please fill in all required fields", true);
-    return;
+    showToast("⚠️ Please fill in all required fields", true); return;
   }
 
   const btn = document.getElementById("placeOrderBtn");
-  btn.disabled = true;
-  btn.textContent = "Placing Order…";
+  btn.disabled = true; btn.textContent = "Placing Order…";
 
   const subtotal = cart.reduce((a, b) => a + Number(b.price) * b.qty, 0);
   const wrapFee  = giftWrap ? CONFIG.GIFT_WRAP : 0;
@@ -393,75 +402,50 @@ async function placeOrder() {
   const orderRef = "DT-" + Date.now();
 
   const payload = {
-    orderRef,
-    dateTime:      new Date().toLocaleString(),
-    senderName,
-    phone,
-    email:         val("email"),
-    recipientName,
-    address,
-    deliveryDate,
-    occasion:      val("occasion"),
-    giftMessage:   val("giftMessage"),
-    items:         cart.map(c => `${c.name} x${c.qty}`).join(", "),
-    subtotal,
-    giftWrap:      wrapFee,
-    deliveryFee:   CONFIG.DELIVERY_FEE,
-    total,
-    paymentMethod: selectedPayment,
+    orderRef, dateTime: new Date().toLocaleString(),
+    senderName, phone, email: val("email"),
+    recipientName, address, deliveryDate,
+    occasion: val("occasion"), giftMessage: val("giftMessage"),
+    items: cart.map(c => `${c.name}${c.chosenColor ? ` (${c.chosenColor})` : ""} x${c.qty}`).join(", "),
+    subtotal, giftWrap: wrapFee, deliveryFee: CONFIG.DELIVERY_FEE,
+    total, paymentMethod: selectedPayment,
   };
 
   try {
     await fetch(CONFIG.SHEET_URL, {
-      method:  "POST",
-      mode:    "no-cors",
+      method: "POST", mode: "no-cors",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(payload),
+      body: JSON.stringify(payload),
     });
-
     document.getElementById("successRef").textContent = orderRef;
-    cart     = [];
-    giftWrap = false;
+    cart = []; giftWrap = false;
     updateCartBadge();
     showView("success");
-
   } catch (err) {
-    console.error("Order error:", err);
     showToast("⚠️ Something went wrong. Please try again.", true);
-    btn.disabled    = false;
-    btn.textContent = "✦ Confirm & Place Order";
+    btn.disabled = false; btn.textContent = "✦ Confirm & Place Order";
   }
 }
 
 // ── View Switching ────────────────────────────────────────────────────────────
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-  const target = document.getElementById(`view-${name}`);
-  if (target) target.classList.add("active");
-
+  document.getElementById(`view-${name}`)?.classList.add("active");
   document.querySelectorAll(".nav-btn:not(.cart-btn)").forEach(b => {
     b.classList.toggle("active", b.textContent.trim().toLowerCase().startsWith(name));
   });
-
   if (name === "cart") renderCart();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// ── Reset ─────────────────────────────────────────────────────────────────────
 function resetAll() {
-  cart     = [];
-  giftWrap = false;
+  cart = []; giftWrap = false;
   document.getElementById("giftWrapCheck").checked = false;
   selectedPayment = "Cash on Delivery";
-  document.querySelectorAll(".payment-opt").forEach((o, i) => {
-    o.classList.toggle("selected", i === 0);
-  });
+  document.querySelectorAll(".payment-opt").forEach((o, i) => o.classList.toggle("selected", i === 0));
   ["senderName","phone","email","recipientName","address","deliveryDate","occasion","giftMessage"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
-
-  updateCartBadge();
-  renderCart();
-  showView("shop");
+  updateCartBadge(); renderCart(); showView("shop");
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -476,13 +460,8 @@ function showToast(msg, isError = false) {
   toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
-// ── Utility ───────────────────────────────────────────────────────────────────
 function escHtml(str) {
   return String(str ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-
-function id(s) { return document.getElementById(s); }
