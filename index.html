@@ -1026,8 +1026,8 @@ nav {
         <div id="catTabs"></div>
       </div>
     </div>
-    <!-- Logo image — pink bg removed via canvas -->
-    <canvas id="logoCanvas" height="44" style="display:block;"></canvas>
+    <!--  image — pink bg removed via canvas -->
+    <canvas id="Canvas" height="44" style="display:block;"></canvas>
     <!-- Brand text -->
     <a class="brand" href="#" style="font-size:1.45rem;">
       <span>Don</span> Trove
@@ -1316,11 +1316,11 @@ nav {
 
 <script>
 (function() {
-  const canvas = document.getElementById('logoCanvas');
+  const canvas = document.getElementById('Canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const img = new Image();
-  img.src = 'Logo__4_.png';
+  img.src = 'Logo (4) (1).png';
   img.onload = function() {
     const scale = 44 / img.naturalHeight;
     const w = Math.round(img.naturalWidth * scale);
