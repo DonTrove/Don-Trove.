@@ -835,6 +835,168 @@ nav {
 }
 .results-meta strong { color: var(--royal); }
 
+
+/* ══ ABOUT VIEW ══ */
+.about-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.about-hero-card {
+  background: linear-gradient(135deg, #6B1A2E 0%, #8B2A4A 60%, #C9697E 100%);
+  border-radius: 24px;
+  padding: 48px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.about-hero-card::before {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+  top: -100px; right: -80px;
+}
+
+.about-sparkles {
+  font-size: 1rem;
+  letter-spacing: 0.4em;
+  color: var(--gold-light);
+  margin-bottom: 14px;
+  opacity: 0.8;
+}
+.about-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.4rem;
+  font-weight: 300;
+  color: var(--beige);
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+.about-subtitle {
+  font-size: 1rem;
+  color: var(--beige-soft);
+  opacity: 0.9;
+  max-width: 440px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+.about-subtitle em { color: var(--gold-light); font-style: italic; }
+
+.about-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(201, 105, 126, 0.1);
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.5s ease both;
+}
+.about-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--royal), var(--violet), var(--gold-light));
+}
+.about-card-pink {
+  background: linear-gradient(135deg, #fff5f7, #fdf0f4);
+  border-color: var(--lavender);
+}
+
+.about-card-icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+}
+.about-card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--plum);
+  margin-bottom: 14px;
+}
+.about-card-text {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.about-card-text em { color: var(--royal); font-style: italic; }
+
+.about-signature {
+  margin-top: 20px;
+  font-size: 0.95rem;
+  color: var(--royal);
+  font-style: italic;
+  line-height: 1.7;
+}
+.about-signature strong { font-style: normal; color: var(--plum); }
+
+/* Contact cards */
+.about-contact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.about-contact-card {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 28px 22px;
+  box-shadow: var(--shadow);
+  border: 1.5px solid rgba(201, 105, 126, 0.15);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  animation: fadeUp 0.5s ease both;
+}
+.about-contact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--violet);
+}
+.about-contact-insta:hover { border-color: #C9697E; }
+
+.about-contact-icon { font-size: 2rem; }
+.about-contact-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.about-contact-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--plum);
+  word-break: break-all;
+}
+.about-contact-cta {
+  font-size: 0.82rem;
+  color: var(--violet);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.about-signoff {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 560px) {
+  .about-contact-row { grid-template-columns: 1fr; }
+  .about-title { font-size: 1.9rem; }
+}
+
 /* ══ ANIMATIONS ══ */
 @keyframes spin    { to { transform: rotate(360deg); } }
 @keyframes fadeUp  { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
@@ -871,18 +1033,15 @@ nav {
         <div id="catTabs"></div>
       </div>
     </div>
-    <!-- Logo image (no background, blended) -->
-    <img
-      src="Logo (4).png"
-      alt="Le Tresor de Misfah logo"
-      style="height:44px;width:auto;mix-blend-mode:screen;opacity:0.92;filter:brightness(1.15) saturate(0.7);"
-    />
+    <!-- Logo image — pink bg removed via canvas -->
+    <canvas id="logoCanvas" height="44" style="display:block;"></canvas>
     <!-- Brand text -->
     <a class="brand" href="#" style="font-size:1.45rem;">
       <span>Don</span> Trove
     </a>
   </div>
   <nav>
+    <button class="nav-btn" onclick="showView('about')">About ✦</button>
     <button class="nav-btn cart-btn" onclick="showView('cart')">
       🛍️ Cart
       <span class="cart-badge" id="cartBadge">0</span>
@@ -1093,9 +1252,104 @@ nav {
   </div>
 </div>
 
+
+<!-- ══ ABOUT VIEW ══ -->
+<div class="view" id="view-about">
+  <div class="about-wrap">
+
+    <!-- Greeting hero card -->
+    <div class="about-hero-card">
+      <div class="about-sparkles">✦ ✦ ✦</div>
+      <h2 class="about-title">Hello, Beautiful Soul! 🌸</h2>
+      <p class="about-subtitle">Welcome to <em>Le Tresor de Misfah</em> — your treasure chest of joy, wrapped with love.</p>
+    </div>
+
+    <!-- Story card -->
+    <div class="about-card">
+      <div class="about-card-icon">💌</div>
+      <h3 class="about-card-title">Our Little Story</h3>
+      <p class="about-card-text">
+        Don Trove was born from one simple belief — that every gift should feel like a warm hug.
+        We pour our hearts into curating treasures that say <em>"I thought of you"</em> louder than words ever could.
+        Whether it's a birthday, an anniversary, or just a random Tuesday that deserves some sparkle —
+        we've got something just for you. 🎀
+      </p>
+    </div>
+
+    <!-- Love message card -->
+    <div class="about-card about-card-pink">
+      <div class="about-card-icon">🫶</div>
+      <h3 class="about-card-title">A Note from Us to You</h3>
+      <p class="about-card-text">
+        Thank you for being here. Every order you place carries a little piece of our love with it.
+        We don't just sell gifts — we craft moments, memories, and smiles.
+        You are the reason we do what we do, and we are so grateful for every single one of you. 💕
+      </p>
+      <div class="about-signature">With all our love,<br/><strong>Misfah & the Don Trove Family 🌷</strong></div>
+    </div>
+
+    <!-- Contact cards row -->
+    <div class="about-contact-row">
+
+      <a href="mailto:misfahcreations@gmail.com" class="about-contact-card">
+        <div class="about-contact-icon">📧</div>
+        <div class="about-contact-label">Email Us</div>
+        <div class="about-contact-value">misfahcreations@gmail.com</div>
+        <div class="about-contact-cta">Say hello →</div>
+      </a>
+
+      <a href="https://www.instagram.com/don.trove/" target="_blank" rel="noopener" class="about-contact-card about-contact-insta">
+        <div class="about-contact-icon">📸</div>
+        <div class="about-contact-label">Follow Along</div>
+        <div class="about-contact-value">@don.trove</div>
+        <div class="about-contact-cta">See our world →</div>
+      </a>
+
+    </div>
+
+    <!-- Bottom sparkle sign-off -->
+    <div class="about-signoff">
+      <div class="about-sparkles">✦ ✦ ✦</div>
+      <p>Made with love &amp; a sprinkle of magic ✨</p>
+      <button class="back-shop-btn" onclick="showView('shop')" style="margin-top:20px;">Shop the Collection 🛍️</button>
+    </div>
+
+  </div>
+</div>
 <!-- ══ TOAST ══ -->
 <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
 <script src="app.js"></script>
+
+
+<script>
+(function() {
+  const canvas = document.getElementById('logoCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.src = 'Logo (4).png';
+  img.onload = function() {
+    const scale = 44 / img.naturalHeight;
+    const w = Math.round(img.naturalWidth * scale);
+    canvas.width  = w;
+    canvas.height = 44;
+    ctx.drawImage(img, 0, 0, w, 44);
+    const imageData = ctx.getImageData(0, 0, w, 44);
+    const d = imageData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i+1], b = d[i+2];
+      // Pink bg: red dominant, warm tone
+      const pinkScore = r - ((g + b) / 2);
+      const isBright  = r > 160;
+      if (isBright && pinkScore > 30) {
+        // Smoothly fade out based on how pink it is
+        d[i+3] = Math.max(0, Math.round(255 * (1 - (pinkScore - 30) / 120)));
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  };
+})();
+</script>
 </body>
 </html>
