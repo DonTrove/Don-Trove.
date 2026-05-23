@@ -365,7 +365,10 @@ function showView(name) {
   const target = document.getElementById(`view-${name}`);
   if (target) target.classList.add("active");
 
-  document.querySelectorAll(".nav-btn:not(.cart-btn)").forEach(b => b.classList.remove("active"));
+  // Highlight matching nav button
+  document.querySelectorAll(".nav-btn:not(.cart-btn)").forEach(b => {
+    b.classList.toggle("active", b.textContent.trim().toLowerCase().startsWith(name));
+  });
 
   if (name === "cart") renderCart();
   window.scrollTo({ top: 0, behavior: "smooth" });
