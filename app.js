@@ -4,7 +4,7 @@
  */
 
 const CONFIG = {
-  SHEET_URL:    "https://script.google.com/macros/s/AKfycbx8zSt9AxxyHaL8_BdiLU0eTy0ESx7tVpBeHy5CBclr-J03adjffb7sXBEueEJHCondfg/exec",
+  SHEET_URL:    "https://script.google.com/macros/s/AKfycbzgFcDc5ccU6OwYLIvF4N7mWQ12mQca1DL0t90DPfvVjc_vg3ot4q9WGGSSrrOes3-nMg/exec",
   DELIVERY_FEE: 200,
   GIFT_WRAP:    300,
 };
@@ -209,16 +209,15 @@ function buildColorSwatches(colorStr, productIndex) {
   const swatches = colors.map((c, ci) => `
     <span
       class="color-swatch${ci === 0 ? ' selected' : ''}"
-      style="background:${c};"
+      style="background:${c};width:14px;height:14px;"
       title="${escHtml(c)}"
       onclick="selectColor(this, ${productIndex}, '${escHtml(c)}')"
     ></span>`).join("");
 
   return `
-    <div class="color-picker">
+    <div class="color-picker" style="margin-bottom:10px;">
       <div class="color-picker-label">Colour:</div>
       <div class="color-swatches" id="swatches-${productIndex}">${swatches}</div>
-      <div class="color-selected-name" id="color-name-${productIndex}">${escHtml(colors[0])}</div>
     </div>`;
 }
 
@@ -227,8 +226,6 @@ function selectColor(el, productIndex, color) {
   const wrap = document.getElementById(`swatches-${productIndex}`);
   if (wrap) wrap.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
   el.classList.add("selected");
-  const label = document.getElementById(`color-name-${productIndex}`);
-  if (label) label.textContent = color;
 }
 
 // ── Carousel Controls ─────────────────────────────────────────────────────────
