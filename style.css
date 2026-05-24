@@ -459,8 +459,8 @@ nav { display: flex; align-items: center; gap: 8px; }
 }
 .color-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
 .color-swatch {
-  width: 22px;
-  height: 22px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
@@ -475,7 +475,7 @@ nav { display: flex; align-items: center; gap: 8px; }
   outline-offset: 2px;
   transform: scale(1.15);
 }
-.color-selected-name { font-size: 0.78rem; color: var(--muted); font-style: italic; }
+.color-selected-name { display: none; }
 
 /* Cart color dot */
 .cart-item-color {
@@ -964,13 +964,14 @@ nav { display: flex; align-items: center; gap: 8px; }
   .about-contact-row { grid-template-columns: 1fr; }
   .about-title       { font-size: 1.9rem; }
 }
-/* ══ SIZE SELECTOR — paste at the very END of style.css ══ */
+
+/* ══ SIZE SELECTOR ══ */
 .size-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0;
-  margin: 8px 0 6px;
+  margin: 6px 0 4px;
 }
 .size-label {
   font-size: 0.72rem;
@@ -979,24 +980,24 @@ nav { display: flex; align-items: center; gap: 8px; }
   text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
-  margin-right: 8px;
+  margin-right: 6px;
   line-height: 2;
 }
 .size-btn {
-  padding: 4px 12px !important;
+  padding: 2px 8px !important;
   border: none !important;
-  border-bottom: 2.5px solid transparent !important;
+  border-bottom: 2px solid transparent !important;
   border-radius: 0 !important;
   background: none !important;
   box-shadow: none !important;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--muted);
   letter-spacing: 0.04em;
   transition: color 0.18s, border-color 0.18s;
-  line-height: 1.8;
+  line-height: 1.6;
 }
 .size-btn:hover {
   color: var(--royal) !important;
@@ -1012,10 +1013,3 @@ nav { display: flex; align-items: center; gap: 8px; }
   box-shadow: none !important;
   transform: none !important;
 }
-
-/* Smaller color swatches */
-.color-swatch {
-  width: 14px !important;
-  height: 14px !important;
-}
-.color-selected-name { display: none !important; }
