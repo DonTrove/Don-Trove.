@@ -1,0 +1,41 @@
+/* ══ SIZE SELECTOR — append to end of style.css ══ */
+.size-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 8px;
+}
+.size-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+.size-btn {
+  padding: 4px 13px;
+  border: 1.5px solid var(--lavender);
+  border-radius: 20px;
+  background: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  transition: all 0.18s;
+  line-height: 1.6;
+}
+.size-btn:hover {
+  border-color: var(--violet);
+  color: var(--royal);
+}
+.size-btn.size-btn-active {
+  background: var(--royal);
+  border-color: var(--royal);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(139, 42, 74, 0.28);
+}
