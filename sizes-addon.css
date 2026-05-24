@@ -1,9 +1,9 @@
-/* ══ SIZE SELECTOR — append to end of style.css ══ */
+/* ══ SIZE SELECTOR — replace existing size button CSS in style.css ══ */
 .size-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 0;
   margin: 10px 0 8px;
 }
 .size-label {
@@ -13,29 +13,29 @@
   text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
-  margin-right: 2px;
+  margin-right: 10px;
 }
 .size-btn {
-  padding: 4px 13px;
-  border: 1.5px solid var(--lavender);
-  border-radius: 20px;
+  padding: 6px 14px;
+  border: none;
+  border-bottom: 2.5px solid transparent;
   background: none;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 500;
   color: var(--muted);
-  letter-spacing: 0.05em;
-  transition: all 0.18s;
-  line-height: 1.6;
+  letter-spacing: 0.04em;
+  transition: color 0.18s, border-color 0.18s;
 }
 .size-btn:hover {
-  border-color: var(--violet);
   color: var(--royal);
+  border-bottom-color: var(--lavender);
 }
 .size-btn.size-btn-active {
-  background: var(--royal);
-  border-color: var(--royal);
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(139, 42, 74, 0.28);
+  color: var(--plum);
+  font-weight: 600;
+  border-bottom-color: var(--royal);
+  background: none;
+  box-shadow: none;
 }
