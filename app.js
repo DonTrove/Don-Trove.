@@ -209,7 +209,7 @@ function buildColorSwatches(colorStr, productIndex) {
   const swatches = colors.map((c, ci) => `
     <span
       class="color-swatch${ci === 0 ? ' selected' : ''}"
-      style="background:${c};width:14px;height:14px;"
+      style="background:${c};"
       title="${escHtml(c)}"
       onclick="selectColor(this, ${productIndex}, '${escHtml(c)}')"
     ></span>`).join("");
