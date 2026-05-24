@@ -78,3 +78,57 @@
   pointer-events: none;
   z-index: 99;
 }
+/* ══ ADD THESE RULES TO YOUR EXISTING styles.css ══ */
+
+/* ── Multi-colour rainbow swatch ── */
+.color-swatch.swatch-multi {
+  background: conic-gradient(
+    #F4A0A0  0deg  60deg,
+    #F9C6D4 60deg 120deg,
+    #B3D9F2 120deg 180deg,
+    #B5E8D5 180deg 240deg,
+    #D4B8F0 240deg 300deg,
+    #FBE8A0 300deg 360deg
+  ) !important;
+}
+
+/* ── Colour name tooltip on hover ── */
+.color-swatch {
+  position: relative; /* needed for tooltip positioning */
+}
+.color-swatch::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--plum);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  padding: 3px 7px;
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 50;
+}
+.color-swatch::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--plum);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 50;
+}
+.color-swatch:hover::after,
+.color-swatch:hover::before {
+  opacity: 1;
+}
