@@ -25,7 +25,7 @@
   </div>
   <!-- Center: logo + brand -->
   <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
-    <canvas id="logoCanvas" height="40" style="display:block;"></canvas>
+    <canvas id="logoCanvas" height="44" style="display:block;"></canvas>
     <a class="brand" href="#" style="font-size:1.45rem;"><span>Don</span> Trove</a>
   </div>
   <!-- Right: nav -->
@@ -44,7 +44,7 @@
   <div class="hero-orb hero-orb-2"></div>
   <div class="hero-content">
     <div class="hero-tag">✦ Curated with love</div>
-    <h1>Le Tresor De <i>Misfah.</h1></i>
+    <h1>Le Tresor De <em>Misfah.</em></h1>
   </div>
 </div>
 
@@ -259,7 +259,7 @@
         We don't just sell gifts — we craft moments, memories, and smiles.
         You are the reason we do what we do, and we are so grateful for every single one of you. 💕
       </p>
-      <div class="about-signature">With all our love,<br/><strong>Misfah & the Don Trove Family 🌷</strong></div>
+      <div class="about-signature">With all our love,<br/><strong>Misfah &amp; the Don Trove Family 🌷</strong></div>
     </div>
     <div class="about-contact-row">
       <a href="mailto:misfahcreations@gmail.com" class="about-contact-card">
@@ -294,24 +294,58 @@
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const img = new Image();
-  img.src = 'logo (4) (1).png';
+  img.crossOrigin = 'anonymous';
+  img.src = 'Logo__4_.png';
   img.onload = function() {
     const scale = 44 / img.naturalHeight;
     const w = Math.round(img.naturalWidth * scale);
     canvas.width  = w;
     canvas.height = 44;
     ctx.drawImage(img, 0, 0, w, 44);
+
     const imageData = ctx.getImageData(0, 0, w, 44);
     const d = imageData.data;
+
+    /* ── Sample the four corners to find the background colour ── */
+    function getPixel(x, y) {
+      const i = (y * w + x) * 4;
+      return [d[i], d[i+1], d[i+2], d[i+3]];
+    }
+    const corners = [
+      getPixel(0, 0), getPixel(w-1, 0),
+      getPixel(0, 43), getPixel(w-1, 43)
+    ];
+    /* Average the corner colours — this is the bg */
+    const bgR = corners.reduce((s,c)=>s+c[0],0)/4;
+    const bgG = corners.reduce((s,c)=>s+c[1],0)/4;
+    const bgB = corners.reduce((s,c)=>s+c[2],0)/4;
+
+    /* ── Remove background pixels using colour distance ── */
+    const THRESHOLD = 55; /* tolerance — raise if edge fringing remains */
+
     for (let i = 0; i < d.length; i += 4) {
       const r = d[i], g = d[i+1], b = d[i+2];
-      const pinkScore = r - ((g + b) / 2);
-      const isBright  = r > 160;
-      if (isBright && pinkScore > 30) {
-        d[i+3] = Math.max(0, Math.round(255 * (1 - (pinkScore - 30) / 120)));
+      /* Euclidean distance from background colour */
+      const dist = Math.sqrt(
+        (r - bgR) ** 2 +
+        (g - bgG) ** 2 +
+        (b - bgB) ** 2
+      );
+      if (dist < THRESHOLD) {
+        /* Fully transparent */
+        d[i+3] = 0;
+      } else if (dist < THRESHOLD * 1.6) {
+        /* Anti-alias transition zone */
+        d[i+3] = Math.round(255 * ((dist - THRESHOLD) / (THRESHOLD * 0.6)));
       }
+      /* else: keep pixel fully opaque */
     }
+
     ctx.putImageData(imageData, 0, 0);
+  };
+  img.onerror = function() {
+    /* Fallback: hide the canvas if image fails to load */
+    canvas.style.display = 'none';
   };
 })();
 </script>
