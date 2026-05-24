@@ -287,22 +287,15 @@ nav { display: flex; align-items: center; gap: 8px; }
   box-shadow: var(--shadow-lg);
 }
 
-/* ══════════════════════════════════════════════
-   CAROUSEL — THE FIX
-   All slides stack via position:absolute.
-   Only .active is visible (opacity:1).
-   The wrapper clips overflow so nothing leaks.
-══════════════════════════════════════════════ */
 .product-img-wrap {
   width: 100%;
-  height: 260px;           /* taller for better product view */
+  height: 260px;
   overflow: hidden;
   position: relative;
   background: linear-gradient(135deg, #FDF0F4, #F5D0DC);
   cursor: pointer;
 }
 
-/* Every slide sits on top of the previous one */
 .carousel-slide {
   position: absolute;
   inset: 0;
@@ -312,22 +305,19 @@ nav { display: flex; align-items: center; gap: 8px; }
   opacity: 0;
   transition: opacity 0.45s ease;
   pointer-events: none;
-  display: block;          /* override any browser default */
+  display: block;
 }
 
-/* Only the active slide shows */
 .carousel-slide.active {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Zoom on card hover — only active slide */
 .product-card:hover .carousel-slide.active {
   transform: scale(1.05);
   transition: opacity 0.45s ease, transform 0.55s ease;
 }
 
-/* ── Arrows — hidden until hover, always visible on touch ── */
 .carousel-arrow {
   position: absolute;
   top: 50%;
@@ -355,7 +345,6 @@ nav { display: flex; align-items: center; gap: 8px; }
 .carousel-prev { left: 10px; }
 .carousel-next { right: 10px; }
 
-/* ── Dots ── */
 .carousel-dots {
   position: absolute;
   bottom: 10px;
@@ -380,7 +369,6 @@ nav { display: flex; align-items: center; gap: 8px; }
   transform: scale(1.3);
 }
 
-/* Placeholder when no image */
 .product-img-placeholder {
   width: 100%; height: 100%;
   display: flex;
@@ -446,36 +434,41 @@ nav { display: flex; align-items: center; gap: 8px; }
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 .color-picker-label {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   flex-shrink: 0;
 }
-.color-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.color-swatches { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
 .color-swatch {
-  width: 14px !important;
-  height: 14px !important;
-  border-radius: 50%;
+  width: 13px !important;
+  height: 13px !important;
+  min-width: 13px !important;
+  min-height: 13px !important;
+  max-width: 13px !important;
+  max-height: 13px !important;
+  border-radius: 50% !important;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 1.5px solid transparent !important;
   outline: 2px solid transparent;
   transition: transform 0.15s, outline 0.15s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
-  display: inline-block;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  display: inline-block !important;
+  flex-shrink: 0;
 }
-.color-swatch:hover { transform: scale(1.18); }
+.color-swatch:hover { transform: scale(1.2); }
 .color-swatch.selected {
   outline: 2px solid var(--royal);
-  outline-offset: 2px;
+  outline-offset: 1px;
   transform: scale(1.15);
 }
-.color-selected-name { display: none; }
+.color-selected-name { display: none !important; }
 
 /* Cart color dot */
 .cart-item-color {
@@ -956,7 +949,6 @@ nav { display: flex; align-items: center; gap: 8px; }
   .payment-options { grid-template-columns: 1fr; }
   .search-bar-wrap { max-width: 100%; }
   .tabs-wrap     { padding: 12px 14px; gap: 10px; }
-  /* Arrows always visible on mobile/touch */
   .carousel-arrow { opacity: 1 !important; }
 }
 @media (max-width: 560px) {
@@ -971,7 +963,7 @@ nav { display: flex; align-items: center; gap: 8px; }
   align-items: center;
   flex-wrap: wrap;
   gap: 0;
-  margin: 6px 0 4px;
+  margin: 4px 0 4px;
 }
 .size-label {
   font-size: 0.72rem;
@@ -980,36 +972,32 @@ nav { display: flex; align-items: center; gap: 8px; }
   text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
-  margin-right: 6px;
-  line-height: 2;
+  margin-right: 4px;
+  line-height: 1;
 }
-.size-btn {
-  padding: 2px 8px !important;
-  border: none !important;
-  border-bottom: 2px solid transparent !important;
-  border-radius: 0 !important;
-  background: none !important;
-  box-shadow: none !important;
-  cursor: pointer;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--muted);
-  letter-spacing: 0.04em;
-  transition: color 0.18s, border-color 0.18s;
-  line-height: 1.6;
+
+/* Nuclear override — beats every other rule */
+button.size-btn,
+button.size-btn:not([class*="add"]) {
+  all: unset !important;
+  display: inline-block !important;
+  cursor: pointer !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.68rem !important;
+  font-weight: 500 !important;
+  color: var(--muted) !important;
+  letter-spacing: 0.04em !important;
+  padding: 1px 5px !important;
+  line-height: 1.5 !important;
+  border-bottom: 1.5px solid transparent !important;
+  transition: color 0.18s, border-color 0.18s !important;
 }
-.size-btn:hover {
+button.size-btn:hover {
   color: var(--royal) !important;
   border-bottom-color: var(--lavender) !important;
-  background: none !important;
-  transform: none !important;
 }
-.size-btn.size-btn-active {
+button.size-btn.size-btn-active {
   color: var(--plum) !important;
-  font-weight: 600;
+  font-weight: 700 !important;
   border-bottom-color: var(--royal) !important;
-  background: none !important;
-  box-shadow: none !important;
-  transform: none !important;
 }
