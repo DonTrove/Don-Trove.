@@ -964,3 +964,58 @@ nav { display: flex; align-items: center; gap: 8px; }
   .about-contact-row { grid-template-columns: 1fr; }
   .about-title       { font-size: 1.9rem; }
 }
+/* ══ SIZE SELECTOR — paste at the very END of style.css ══ */
+.size-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 8px 0 6px;
+}
+.size-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+  margin-right: 8px;
+  line-height: 2;
+}
+.size-btn {
+  padding: 4px 12px !important;
+  border: none !important;
+  border-bottom: 2.5px solid transparent !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  transition: color 0.18s, border-color 0.18s;
+  line-height: 1.8;
+}
+.size-btn:hover {
+  color: var(--royal) !important;
+  border-bottom-color: var(--lavender) !important;
+  background: none !important;
+  transform: none !important;
+}
+.size-btn.size-btn-active {
+  color: var(--plum) !important;
+  font-weight: 600;
+  border-bottom-color: var(--royal) !important;
+  background: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Smaller color swatches */
+.color-swatch {
+  width: 14px !important;
+  height: 14px !important;
+}
+.color-selected-name { display: none !important; }
