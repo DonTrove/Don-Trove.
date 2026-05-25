@@ -39,7 +39,9 @@
   <div class="hero-orb hero-orb-1"></div>
   <div class="hero-orb hero-orb-2"></div>
   <div class="hero-content">
-    <canvas id="heroLogoCanvas" height="220" style="display:block;margin:0 auto 28px;"></canvas>
+    <div style="display:flex;justify-content:center;margin:0 auto 32px;">
+      <canvas id="heroLogoCanvas" style="display:block;max-width:260px;width:100%;"></canvas>
+    </div>
     <h1>DON <em>TROVE</em></h1>
   </div>
 </div>
@@ -322,15 +324,37 @@ function removeBg(canvas, ctx, img, height) {
   ctx.putImageData(imageData, 0, 0);
 }
 
-/* ── Hero logo (large) ── */
+/* ── Hero logo — rendered by width for correct proportions ── */
 (function() {
   const canvas = document.getElementById('heroLogoCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const img = new Image();
   img.crossOrigin = 'anonymous';
-  img.src = 'logo (4) (2).png';
-  img.onload  = () => removeBg(canvas, ctx, img, 220);
+  img.src = 'logo (4) (1).png';
+  img.onload = function() {
+    const TARGET_W = 300;
+    const scale = TARGET_W / img.naturalWidth;
+    const h = Math.round(img.naturalHeight * scale);
+    canvas.width  = TARGET_W;
+    canvas.height = h;
+    ctx.drawImage(img, 0, 0, TARGET_W, h);
+
+    const imageData = ctx.getImageData(0, 0, TARGET_W, h);
+    const d = imageData.data;
+    function px(x, y) { const i=(y*TARGET_W+x)*4; return [d[i],d[i+1],d[i+2]]; }
+    const corners = [px(0,0), px(TARGET_W-1,0), px(0,h-1), px(TARGET_W-1,h-1)];
+    const bgR = corners.reduce((s,c)=>s+c[0],0)/4;
+    const bgG = corners.reduce((s,c)=>s+c[1],0)/4;
+    const bgB = corners.reduce((s,c)=>s+c[2],0)/4;
+    const T = 55;
+    for (let i = 0; i < d.length; i += 4) {
+      const dist = Math.sqrt((d[i]-bgR)**2+(d[i+1]-bgG)**2+(d[i+2]-bgB)**2);
+      if (dist < T) d[i+3] = 0;
+      else if (dist < T*1.6) d[i+3] = Math.round(255*((dist-T)/(T*0.6)));
+    }
+    ctx.putImageData(imageData, 0, 0);
+  };
   img.onerror = () => canvas.style.display = 'none';
 })();
 </script>
