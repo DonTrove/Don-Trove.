@@ -16,7 +16,7 @@
   --silver:       #A8A8C0;   /* steel silver */
   --silver-light: #E8E8F0;   /* pearl */
   --pearl:        #F8F6FF;   /* near-white */
-  --lightpink:     #E8748A;
+  --lightpink:    #E8748A;
   --shadow:       0 4px 32px rgba(224, 104, 120, 0.10);
   --shadow-lg:    0 12px 60px rgba(46, 32, 48, 0.18);
 }
@@ -109,7 +109,7 @@ nav { display: flex; align-items: center; gap: 8px; }
 
 /* ══ HERO ══ */
 .hero {
-  background: linear-gradient(135deg, #E8748A 0%, #4A2838 25%, #5A3040 50%, #6A3848 75%, #E8748A 100%);
+  background: linear-gradient(135deg, #E8748A 0%, #E8748A 25%, #E8748A 50%, #E8748A 75%, #E8748A 100%);
   position: relative;
   overflow: hidden;
   padding: 140px 24px 90px;
