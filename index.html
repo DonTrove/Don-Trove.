@@ -40,7 +40,7 @@
   <div class="hero-orb hero-orb-2"></div>
   <div class="hero-content">
     <div style="display:flex;justify-content:center;margin:0 auto 32px;">
-      <canvas id="heroLogoCanvas" style="display:block;max-width:260px;width:100%;"></canvas>
+      <canvas id="heroLogoCanvas" style="display:block;max-width:520px;width:90%;"></canvas>
     </div>
     <h1>DON <em>TROVE</em></h1>
   </div>
@@ -331,9 +331,9 @@ function removeBg(canvas, ctx, img, height) {
   const ctx = canvas.getContext('2d');
   const img = new Image();
   img.crossOrigin = 'anonymous';
-  img.src = 'logo (4) (2).png';
+  img.src = 'logo (4) (1).png';
   img.onload = function() {
-    const TARGET_W = 300;
+    const TARGET_W = 800;
     const scale = TARGET_W / img.naturalWidth;
     const h = Math.round(img.naturalHeight * scale);
     canvas.width  = TARGET_W;
@@ -347,11 +347,11 @@ function removeBg(canvas, ctx, img, height) {
     const bgR = corners.reduce((s,c)=>s+c[0],0)/4;
     const bgG = corners.reduce((s,c)=>s+c[1],0)/4;
     const bgB = corners.reduce((s,c)=>s+c[2],0)/4;
-    const T = 55;
+    const T = 90;
     for (let i = 0; i < d.length; i += 4) {
       const dist = Math.sqrt((d[i]-bgR)**2+(d[i+1]-bgG)**2+(d[i+2]-bgB)**2);
       if (dist < T) d[i+3] = 0;
-      else if (dist < T*1.6) d[i+3] = Math.round(255*((dist-T)/(T*0.6)));
+      else if (dist < T*2) d[i+3] = Math.round(255*((dist-T)/(T)));
     }
     ctx.putImageData(imageData, 0, 0);
   };
