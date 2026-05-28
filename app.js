@@ -1,6 +1,7 @@
 /**
  * Don Trove — app.js
  * Multi-image carousel | Color swatches | Size selector with per-size pricing
+ * Size & colour selection moved to cart view
  */
 
 const CONFIG = {
@@ -10,28 +11,22 @@ const CONFIG = {
 };
 
 // ── Named colour palette ──────────────────────────────────────────────────────
-// In your Google Sheet, put any of these names (or raw hex/CSS) in the Colors column.
-// Multiple colours separated by commas: "Light Pink, Light Blue, Mint Green, Multi"
 const COLOUR_MAP = {
-  // Pinks
   "rose":         "#C9697E",
   "light pink":   "#F9C6D4",
   "blush pink":   "#F5A8BC",
   "dusty rose":   "#E8A4B8",
   "hot pink":     "#F06090",
   "pink":         "#F5A8BC",
-  // Reds
   "light red":    "#F4A0A0",
   "coral":        "#F2836B",
   "red":          "#E05555",
   "berry":        "#9B2A4A",
-  // Blues
   "light blue":   "#B3D9F2",
   "sky blue":     "#7EC8E3",
   "periwinkle":   "#A8B8F0",
   "navy":         "#3A5A8C",
   "blue":         "#7EC8E3",
-  // Greens
   "light green":  "#B5E8D5",
   "mint green":   "#B5E8D5",
   "mint":         "#B5E8D5",
@@ -39,12 +34,10 @@ const COLOUR_MAP = {
   "sage":         "#A8D8B9",
   "pistachio":    "#C8E8C0",
   "green":        "#6DBE8C",
-  // Purples
   "lilac":        "#D4B8F0",
   "lavender":     "#C2A8E8",
   "purple":       "#9B72CF",
   "violet":       "#B090E0",
-  // Neutrals & warm
   "peach":        "#FBCBA8",
   "butter":       "#FAE8A0",
   "yellow":       "#F5DC6A",
@@ -57,20 +50,16 @@ const COLOUR_MAP = {
   "brown":        "#A07858",
   "gold":         "#E8C870",
   "champagne":    "#F5E6C8",
-  // Special — "multi" renders as a conic rainbow gradient via CSS class
   "multi":        "__MULTI__",
 };
 
-let allProducts    = [];
-let cart           = [];
-let activeCategory = "All";
-let giftWrap       = false;
-let selectedPayment= "Cash on Delivery";
+let allProducts     = [];
+let cart            = [];
+let activeCategory  = "All";
+let giftWrap        = false;
+let selectedPayment = "Cash on Delivery";
 
-// Per-card state (keyed by filtered grid index)
-const carouselState  = {};
-const selectedColors = {};
-const selectedSizes  = {};
+const carouselState = {};
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
@@ -192,25 +181,8 @@ function renderProducts() {
         `).join("")}
       </div>` : "";
 
-    // ── Colors ──
-    const colorSwatches = buildColorSwatches(p.colors || p.color || "", i);
-
-    // ── Sizes ──
-    const hasSizes = p.sizes && p.sizes.length > 0;
-    if (selectedSizes[i] === undefined) selectedSizes[i] = 0;
-    const startPrice = hasSizes ? p.sizes[0].price : p.price;
-
-    const sizesHtml = hasSizes ? `
-      <div class="size-row">
-        <span class="size-label">SIZE:</span>
-        ${p.sizes.map((s, si) => `
-          <button
-            class="size-btn${si === 0 ? ' size-btn-active' : ''}"
-            id="sizebtn-${i}-${si}"
-            onclick="selectSize(${i}, ${si})"
-          >${escHtml(s.label)}</button>
-        `).join("")}
-      </div>` : "";
+    // ── Starting price (first size or base price) ──
+    const startPrice = (p.sizes && p.sizes.length > 0) ? p.sizes[0].price : p.price;
 
     return `
       <div class="product-card" style="animation-delay:${i * 0.06}s">
@@ -223,10 +195,8 @@ function renderProducts() {
           ${p.category ? `<div class="product-category-tag">${escHtml(p.category)}</div>` : ""}
           <div class="product-name">${escHtml(p.name)}</div>
           ${p.description ? `<div class="product-desc">${escHtml(p.description)}</div>` : ""}
-          ${sizesHtml}
-          ${colorSwatches}
           <div class="product-footer">
-            <span class="product-price" id="price-${i}">PKR ${Number(startPrice).toLocaleString()}</span>
+            <span class="product-price">PKR ${Number(startPrice).toLocaleString()}</span>
             <button class="add-btn" onclick="addToCart(${i}, this)">+ Add to Cart</button>
           </div>
         </div>
@@ -234,27 +204,7 @@ function renderProducts() {
   }).join("");
 }
 
-// ── Size Selection ────────────────────────────────────────────────────────────
-function selectSize(cardIdx, sizeIdx) {
-  selectedSizes[cardIdx] = sizeIdx;
-  const filtered = getFiltered();
-  const product  = filtered[cardIdx];
-  if (!product || !product.sizes) return;
-
-  product.sizes.forEach((_, si) => {
-    const btn = document.getElementById(`sizebtn-${cardIdx}-${si}`);
-    if (btn) btn.classList.toggle("size-btn-active", si === sizeIdx);
-  });
-
-  const priceEl = document.getElementById(`price-${cardIdx}`);
-  if (priceEl) priceEl.textContent = `PKR ${Number(product.sizes[sizeIdx].price).toLocaleString()}`;
-}
-
 // ── Colour Utilities ──────────────────────────────────────────────────────────
-/**
- * Resolve a raw colour string from the sheet to { hex, name, isMulti }.
- * Accepts named colours from COLOUR_MAP, or raw hex/CSS values.
- */
 function resolveColour(raw) {
   const trimmed = raw.trim();
   const key     = trimmed.toLowerCase();
@@ -262,56 +212,7 @@ function resolveColour(raw) {
     const hex = COLOUR_MAP[key];
     return { hex, name: trimmed, isMulti: hex === "__MULTI__" };
   }
-  // Fall back to raw CSS value (hex, rgb, named CSS colour…)
   return { hex: trimmed, name: trimmed, isMulti: false };
-}
-
-// ── Color Swatches ────────────────────────────────────────────────────────────
-function buildColorSwatches(colorStr, productIndex) {
-  if (!colorStr || !String(colorStr).trim()) return "";
-
-  const colours = String(colorStr)
-    .split(",")
-    .map(c => c.trim())
-    .filter(Boolean)
-    .map(resolveColour);
-
-  if (colours.length === 0) return "";
-
-  // Pre-select first colour
-  if (selectedColors[productIndex] === undefined) {
-    selectedColors[productIndex] = colours[0].isMulti ? "Multi" : colours[0].name;
-  }
-
-  const swatches = colours.map((c, ci) => {
-    const isFirst = ci === 0;
-    if (c.isMulti) {
-      return `<span
-        class="color-swatch swatch-multi${isFirst ? ' selected' : ''}"
-        title="Multi"
-        onclick="selectColor(this, ${productIndex}, 'Multi')"
-      ></span>`;
-    }
-    return `<span
-      class="color-swatch${isFirst ? ' selected' : ''}"
-      style="background:${escHtml(c.hex)};"
-      title="${escHtml(c.name)}"
-      onclick="selectColor(this, ${productIndex}, '${escHtml(c.name)}')"
-    ></span>`;
-  }).join("");
-
-  return `
-    <div class="color-picker" style="margin-bottom:10px;">
-      <div class="color-picker-label">Colour:</div>
-      <div class="color-swatches" id="swatches-${productIndex}">${swatches}</div>
-    </div>`;
-}
-
-function selectColor(el, productIndex, colorName) {
-  selectedColors[productIndex] = colorName;
-  const wrap = document.getElementById(`swatches-${productIndex}`);
-  if (wrap) wrap.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
-  el.classList.add("selected");
 }
 
 // ── Carousel Controls ─────────────────────────────────────────────────────────
@@ -355,25 +256,24 @@ function addToCart(gridIndex, btn) {
   const product  = filtered[gridIndex];
   if (!product) return;
 
+  // Use first size/price as default; user will refine in cart
   const hasSizes  = product.sizes && product.sizes.length > 0;
-  const sizeIdx   = selectedSizes[gridIndex] ?? 0;
-  const sizeObj   = hasSizes ? product.sizes[sizeIdx] : null;
-  const price     = hasSizes ? sizeObj.price : product.price;
-  const sizeLabel = hasSizes ? sizeObj.label : null;
+  const price     = hasSizes ? product.sizes[0].price : product.price;
+  const sizeLabel = hasSizes ? product.sizes[0].label : null;
 
-  const chosenColor = selectedColors[gridIndex] || null;
-
-  const cartKey  = `${product.name}|${sizeLabel || ""}|${chosenColor || ""}`;
-  const existing = cart.find(c => c._cartKey === cartKey);
-
-  if (existing) {
-    existing.qty++;
-  } else {
-    cart.push({ ...product, price, sizeLabel, chosenColor, qty: 1, _cartKey: cartKey });
-  }
+  const cartKey = `${product.name}|${Date.now()}`;
+  cart.push({
+    ...product,
+    price,
+    sizeLabel,
+    chosenColor: null,
+    qty: 1,
+    _cartKey: cartKey,
+  });
 
   updateCartBadge();
-  showToast(`🎁 "${product.name}"${sizeLabel ? ` (${sizeLabel})` : ""} added to cart`);
+  showToast(`🎁 "${product.name}" added — pick size & colour in cart`);
+  showView("cart");
 
   if (btn) {
     const orig = btn.textContent;
@@ -410,36 +310,79 @@ function renderCart() {
   }
 
   list.innerHTML = cart.map((item, i) => {
+
+    // ── Size picker ──
+    const hasSizes = item.sizes && item.sizes.length > 0;
+    const sizesHtml = hasSizes ? `
+      <div class="size-row" style="margin:10px 0 4px;">
+        <span class="size-label">SIZE:</span>
+        ${item.sizes.map((s, si) => {
+          const isActive = item.sizeLabel === s.label;
+          return `<button
+            class="size-btn${isActive ? ' size-btn-active' : ''}"
+            onclick="cartSelectSize(${i}, ${si})"
+          >${escHtml(s.label)}</button>`;
+        }).join("")}
+      </div>` : "";
+
+    // ── Colour picker ──
+    const colorStr = item.colors || item.color || "";
+    const colours  = colorStr
+      ? String(colorStr).split(",").map(c => c.trim()).filter(Boolean).map(resolveColour)
+      : [];
+
+    const colorHtml = colours.length ? `
+      <div class="color-picker" style="margin:6px 0 10px;">
+        <div class="color-picker-label">COLOUR:</div>
+        <div class="color-swatches" id="cart-swatches-${i}">
+          ${colours.map(c => {
+            const isSelected = item.chosenColor === c.name;
+            if (c.isMulti) {
+              return `<span class="color-swatch swatch-multi${isSelected ? ' selected' : ''}" title="Multi" onclick="cartSelectColor(${i}, 'Multi', this)"></span>`;
+            }
+            return `<span
+              class="color-swatch${isSelected ? ' selected' : ''}"
+              style="background:${escHtml(c.hex)};"
+              title="${escHtml(c.name)}"
+              onclick="cartSelectColor(${i}, '${escHtml(c.name)}', this)"
+            ></span>`;
+          }).join("")}
+        </div>
+      </div>` : "";
+
+    // ── Colour dot for chosen colour display ──
     const isMultiColor  = item.chosenColor === "Multi";
     const colorDotStyle = isMultiColor
       ? `background:conic-gradient(#F4A0A0 0deg 60deg,#F9C6D4 60deg 120deg,#B3D9F2 120deg 180deg,#B5E8D5 180deg 240deg,#D4B8F0 240deg 300deg,#FBE8A0 300deg 360deg);`
       : `background:${escHtml(COLOUR_MAP[item.chosenColor?.toLowerCase()] || item.chosenColor || "#ccc")};`;
 
+    // ── Hint if nothing selected yet ──
+    const needsAttention = (item.sizes && item.sizes.length > 1 && !item.sizeLabel) ||
+                           (colours.length > 0 && !item.chosenColor);
+
     return `
-    <div class="cart-item">
-      <div class="cart-item-img">
+    <div class="cart-item" style="flex-wrap:wrap;align-items:flex-start;${needsAttention ? 'border-color:rgba(224,104,120,0.35);' : ''}">
+      <div class="cart-item-img" style="flex-shrink:0;">
         ${item.imageUrl
           ? `<img src="${escHtml(item.imageUrl)}" alt="${escHtml(item.name)}" onerror="this.style.display='none'">`
           : "🎁"}
       </div>
-      <div class="cart-item-info">
+      <div class="cart-item-info" style="flex:1;min-width:160px;">
         <div class="cart-item-name">${escHtml(item.name)}</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">
-          ${item.sizeLabel
-            ? `<span style="font-size:0.75rem;background:var(--blush);color:var(--royal);padding:2px 9px;border-radius:10px;font-weight:500;">${escHtml(item.sizeLabel)}</span>`
-            : ""}
-          ${item.chosenColor
-            ? `<div class="cart-item-color"><span class="cart-color-dot" style="${colorDotStyle}"></span>${escHtml(item.chosenColor)}</div>`
-            : ""}
-        </div>
         <div class="cart-item-price">PKR ${Number(item.price).toLocaleString()} each</div>
+
+        ${sizesHtml}
+        ${colorHtml}
+
+        ${needsAttention ? `<div style="font-size:0.75rem;color:var(--royal);margin-bottom:6px;">✦ Please select your options above</div>` : ""}
+
         <div class="qty-ctrl">
           <button class="qty-btn" onclick="changeQty(${i}, -1)">−</button>
           <span class="qty-num">${item.qty}</span>
           <button class="qty-btn" onclick="changeQty(${i}, 1)">+</button>
         </div>
       </div>
-      <div style="text-align:right">
+      <div style="text-align:right;flex-shrink:0;">
         <div style="font-weight:700;color:var(--royal);margin-bottom:8px;">PKR ${(Number(item.price) * item.qty).toLocaleString()}</div>
         <button class="remove-btn" onclick="removeFromCart(${i})">✕ Remove</button>
       </div>
@@ -448,6 +391,22 @@ function renderCart() {
 
   document.getElementById("proceedBtn").disabled = false;
   updateSummary();
+}
+
+// ── Cart Size & Colour Selectors ──────────────────────────────────────────────
+function cartSelectSize(cartIdx, sizeIdx) {
+  const item = cart[cartIdx];
+  if (!item || !item.sizes) return;
+  item.sizeLabel = item.sizes[sizeIdx].label;
+  item.price     = item.sizes[sizeIdx].price;
+  renderCart();
+}
+
+function cartSelectColor(cartIdx, colorName, el) {
+  cart[cartIdx].chosenColor = colorName;
+  const wrap = document.getElementById(`cart-swatches-${cartIdx}`);
+  if (wrap) wrap.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
+  el.classList.add("selected");
 }
 
 function changeQty(index, delta) {
