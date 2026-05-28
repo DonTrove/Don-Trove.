@@ -166,16 +166,19 @@ function renderProducts() {
     carouselState[carKey] = 0;
     const hasMany = images.length > 1;
 
-    // FIX 1: added decoding="async" to carousel slides
-    const slides = images.map((url, si) => `
-      <img
+    // First 3 products load eagerly (above the fold), rest lazy
+    const slides = images.map((url, si) => {
+      const eager = i < 3 && si === 0;
+      return `<img
         src="${escHtml(url)}"
         alt="${escHtml(p.name)} ${si + 1}"
         class="carousel-slide${si === 0 ? ' active' : ''}"
-        loading="lazy"
+        loading="${eager ? 'eager' : 'lazy'}"
+        fetchpriority="${eager ? 'high' : 'auto'}"
         decoding="async"
         onerror="this.style.display='none'"
-      />`).join("");
+      />`;
+    }).join("");
 
     const arrows = hasMany ? `
       <button class="carousel-arrow carousel-prev" onclick="event.stopPropagation();moveSlide('${carKey}',-1)">&#8249;</button>
