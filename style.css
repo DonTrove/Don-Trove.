@@ -111,13 +111,13 @@ nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
 /* ══ HERO ══ */
 .hero {
-  background: url('BG.png') center center / cover no-repeat;
+  background: url('BG.png') center center / 100% 100% no-repeat;
   position: relative;
   overflow: hidden;
   width: 100%;
   /* FIX: use padding-top to push below fixed header, set min-height for mobile */
   margin-top: 68px;
-  height: 340px;
+  height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1004,8 +1004,8 @@ nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   /* FIX: Hero top offset matches new header height */
   .hero {
     margin-top: 60px;
-    height: 260px;
-    background-position: center 30%;
+    height: 180px;
+    background-size: 100% 100%;
   }
 
   .tabs-wrap {
