@@ -109,7 +109,9 @@ nav { display: flex; align-items: center; gap: 8px; }
 
 /* ══ HERO ══ */
 .hero {
-  background: linear-gradient(135deg, #E8748A 0%, #E8748A 25%, #E8748A 50%, #E8748A 75%, #E8748A 100%);
+  background: 
+    linear-gradient(135deg, rgba(232, 116, 138, 0.35) 0%, rgba(232, 116, 138, 0.35) 100%),
+    url('BG.png') center center / cover no-repeat;
   position: relative;
   overflow: hidden;
   padding: 140px 24px 90px;
