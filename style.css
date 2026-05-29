@@ -116,7 +116,7 @@ nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   overflow: hidden;
   width: 100%;
   margin-top: 68px;
-  height: 340px;
+  height: 480px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1004,7 +1004,7 @@ nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .hero {
     margin-top: 60px;
     height: auto;
-    aspect-ratio: 1920 / 260;
+    aspect-ratio: 1920 / 480;
     background-size: contain;
     background-position: center center;
     background-repeat: no-repeat;
