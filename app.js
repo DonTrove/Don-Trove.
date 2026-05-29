@@ -161,7 +161,6 @@ function renderProducts() {
     </div>` : "";
 
   grid.innerHTML = backBar + filtered.map((p, i) => {
-    // ── Images ──
     const images = (p.images && p.images.length > 0)
       ? p.images
       : (p.imageUrl ? p.imageUrl.split('&').map(u => u.trim()).filter(Boolean) : []);
@@ -169,7 +168,6 @@ function renderProducts() {
     carouselState[carKey] = 0;
     const hasMany = images.length > 1;
 
-    // First 3 products load eagerly (above the fold), rest lazy
     const slides = images.map((url, si) => {
       const eager = i < 3 && si === 0;
       return `<img
@@ -216,7 +214,6 @@ function renderProducts() {
       </div>`;
   }).join("");
 
-  // ── Init touch swipe for every multi-image carousel ──
   filtered.forEach((p, i) => {
     const images = (p.images && p.images.length > 0)
       ? p.images
@@ -285,7 +282,6 @@ function initSwipe(carKey) {
     if (startX === null) return;
     const dx = e.changedTouches[0].clientX - startX;
     const dy = Math.abs(e.changedTouches[0].clientY - startY);
-    // Only trigger if horizontal swipe is dominant and long enough
     if (Math.abs(dx) > 40 && dy < 80) {
       dx < 0 ? moveSlide(carKey, 1) : moveSlide(carKey, -1);
     }
@@ -517,6 +513,12 @@ async function placeOrder() {
   const btn = document.getElementById("placeOrderBtn");
   btn.disabled = true; btn.textContent = "Placing Order…";
 
+  // Safety net: if fetch hangs, re-enable after 15s
+  const safetyTimer = setTimeout(() => {
+    btn.disabled = false; btn.textContent = "✦ Confirm & Place Order";
+    showToast("⚠️ Taking too long — please try again.", true);
+  }, 15000);
+
   const subtotal = cart.reduce((a, b) => a + Number(b.price) * b.qty, 0);
   const wrapFee  = giftWrap ? CONFIG.GIFT_WRAP : 0;
   const total    = subtotal + CONFIG.DELIVERY_FEE + wrapFee;
@@ -546,16 +548,23 @@ async function placeOrder() {
       body: JSON.stringify(payload),
     });
 
+    clearTimeout(safetyTimer);
+
     document.getElementById("successRef").textContent = orderRef;
 
-    // Clear cart & form fields immediately after success
+    // ✅ Re-enable button BEFORE navigating away so next order works
+    btn.disabled = false; btn.textContent = "✦ Confirm & Place Order";
+
+    // Clear cart & form fields
     cart = []; giftWrap = false;
     ["senderName", "phone", "email", "address"]
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
 
     updateCartBadge();
     showView("success");
+
   } catch (err) {
+    clearTimeout(safetyTimer);
     showToast("⚠️ Something went wrong. Please try again.", true);
     btn.disabled = false; btn.textContent = "✦ Confirm & Place Order";
   }
@@ -591,9 +600,11 @@ function resetAll() {
   ["senderName", "phone", "email", "address"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
 
-  // Fix: re-enable proceed button so the next order works without a page refresh
-  const proceedBtn = document.getElementById("proceedBtn");
-  if (proceedBtn) proceedBtn.disabled = false;
+  // Re-enable both buttons so next order works without a page refresh
+  const proceedBtn    = document.getElementById("proceedBtn");
+  const placeOrderBtn = document.getElementById("placeOrderBtn");
+  if (proceedBtn)    { proceedBtn.disabled = false; }
+  if (placeOrderBtn) { placeOrderBtn.disabled = false; placeOrderBtn.textContent = "✦ Confirm & Place Order"; }
 
   updateCartBadge(); renderCart(); goHome();
 }
