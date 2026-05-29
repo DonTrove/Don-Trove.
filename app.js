@@ -211,6 +211,14 @@ function renderProducts() {
         </div>
       </div>`;
   }).join("");
+
+  // ── Init touch swipe for every multi-image carousel ──
+  filtered.forEach((p, i) => {
+    const images = (p.images && p.images.length > 0)
+      ? p.images
+      : (p.imageUrl ? p.imageUrl.split('&').map(u => u.trim()).filter(Boolean) : []);
+    if (images.length > 1) initSwipe(`prod-${i}`);
+  });
 }
 
 // ── Colour Utilities ──────────────────────────────────────────────────────────
@@ -254,6 +262,32 @@ function goToSlide(carKey, index) {
   carouselState[carKey] = index;
   slides[index].classList.add("active");
   if (dots[index]) dots[index].classList.add("active");
+}
+
+// ── Touch Swipe for Mobile ────────────────────────────────────────────────────
+function initSwipe(carKey) {
+  const wrap = document.getElementById(carKey);
+  if (!wrap) return;
+
+  let startX = null;
+  let startY = null;
+
+  wrap.addEventListener("touchstart", e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  wrap.addEventListener("touchend", e => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+    // Only trigger if horizontal swipe is dominant and long enough
+    if (Math.abs(dx) > 40 && dy < 80) {
+      dx < 0 ? moveSlide(carKey, 1) : moveSlide(carKey, -1);
+    }
+    startX = null;
+    startY = null;
+  }, { passive: true });
 }
 
 // ── Search ────────────────────────────────────────────────────────────────────
@@ -363,7 +397,6 @@ function renderCart() {
     <div class="cart-item" style="flex-wrap:wrap;align-items:flex-start;${needsAttention ? 'border-color:rgba(224,104,120,0.35);' : ''}">
       <div class="cart-item-img" style="flex-shrink:0;">
         ${item.imageUrl
-          // FIX 2: added loading="lazy" decoding="async" to cart image
           ? `<img src="${escHtml(item.imageUrl)}" alt="${escHtml(item.name)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`
           : "🎁"}
       </div>
