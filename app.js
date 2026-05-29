@@ -160,7 +160,7 @@ function renderProducts() {
     // ── Images ──
     const images = (p.images && p.images.length > 0)
       ? p.images
-      : (p.imageUrl ? p.imageUrl.split('|').map(u => u.trim()).filter(Boolean) : []);
+      : (p.imageUrl ? p.imageUrl.split(',').map(u => u.trim()).filter(Boolean) : []);
     const carKey = `prod-${i}`;
     carouselState[carKey] = 0;
     const hasMany = images.length > 1;
