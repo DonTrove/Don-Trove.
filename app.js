@@ -506,10 +506,11 @@ function selectPayment(el, method) {
 
 async function placeOrder() {
   const val = id => (document.getElementById(id)?.value || "").trim();
-  const senderName = val("senderName"), phone = val("phone"),
-        recipientName = val("recipientName"), address = val("address");
+  const senderName = val("senderName");
+  const phone      = val("phone");
+  const address    = val("address");
 
-  if (!senderName || !phone || !recipientName || !address) {
+  if (!senderName || !phone || !address) {
     showToast("⚠️ Please fill in all required fields", true); return;
   }
 
@@ -522,15 +523,20 @@ async function placeOrder() {
   const orderRef = "DT-" + Date.now();
 
   const payload = {
-    orderRef, dateTime: new Date().toLocaleString(),
-    senderName, phone, email: val("email"),
-    recipientName, address, 
-    occasion: val("occasion"), giftMessage: val("giftMessage"),
+    orderRef,
+    dateTime: new Date().toLocaleString(),
+    senderName,
+    phone,
+    email: val("email"),
+    address,
     items: cart.map(c =>
       `${c.name}${c.sizeLabel ? ` [${c.sizeLabel}]` : ""}${c.chosenColor ? ` (${c.chosenColor})` : ""} x${c.qty} @ PKR ${c.price}`
     ).join(", "),
-    subtotal, giftWrap: wrapFee, deliveryFee: CONFIG.DELIVERY_FEE,
-    total, paymentMethod: selectedPayment,
+    subtotal,
+    giftWrap: wrapFee,
+    deliveryFee: CONFIG.DELIVERY_FEE,
+    total,
+    paymentMethod: selectedPayment,
   };
 
   try {
@@ -539,8 +545,14 @@ async function placeOrder() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
     document.getElementById("successRef").textContent = orderRef;
+
+    // Clear cart & form fields immediately after success
     cart = []; giftWrap = false;
+    ["senderName", "phone", "email", "address"]
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+
     updateCartBadge();
     showView("success");
   } catch (err) {
@@ -576,8 +588,13 @@ function resetAll() {
   if (gwc) gwc.checked = false;
   selectedPayment = "Cash on Delivery";
   document.querySelectorAll(".payment-opt").forEach((o, i) => o.classList.toggle("selected", i === 0));
-  ["senderName","phone","email","recipientName","address","occasion","giftMessage"]
+  ["senderName", "phone", "email", "address"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+
+  // Fix: re-enable proceed button so the next order works without a page refresh
+  const proceedBtn = document.getElementById("proceedBtn");
+  if (proceedBtn) proceedBtn.disabled = false;
+
   updateCartBadge(); renderCart(); goHome();
 }
 
