@@ -41,7 +41,7 @@
 </div>
 
 <!-- ══ SEARCH TOOLBAR ══ -->
-<div class="tabs-wrap">
+<div class="tabs-wrap" id="searchBar">
   <div class="search-bar-wrap">
     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -64,7 +64,7 @@
 
 <!-- ══ CART VIEW ══ -->
 <div class="view" id="view-cart">
-  <button onclick="showView('shop')" class="back-btn">← Back to Shop</button>
+  <button onclick="goHome()" class="back-btn">← Back to Shop</button>
   <p class="section-title">Your Cart</p>
   <p class="section-sub">Review your selections before proceeding</p>
   <div class="cart-layout">
@@ -226,7 +226,7 @@
 
 <!-- ══ ABOUT VIEW ══ -->
 <div class="view" id="view-about">
-  <button onclick="showView('shop')" class="back-btn">← Back to Shop</button>
+  <button onclick="goHome()" class="back-btn">← Back to Shop</button>
   <div class="about-wrap">
     <div class="about-hero-card">
       <div class="about-sparkles">✦ ✦ ✦</div>
@@ -270,7 +270,7 @@
     <div class="about-signoff">
       <div class="about-sparkles">✦ ✦ ✦</div>
       <p>Made with love &amp; a sprinkle of magic ✨</p>
-      <button class="back-shop-btn" onclick="showView('shop')" style="margin-top:20px;">Shop the Collection 🛍️</button>
+      <button class="back-shop-btn" onclick="goHome()" style="margin-top:20px;">Shop the Collection 🛍️</button>
     </div>
   </div>
 </div>
