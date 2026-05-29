@@ -1003,12 +1003,9 @@ nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   /* FIX: Hero mobile — contain preserves full image + borders */
   .hero {
     margin-top: 60px;
-    height: auto;
-    aspect-ratio: 1920 / 480;
-    background-size: contain;
+    height: 160px;
+    background-size: cover;
     background-position: center center;
-    background-repeat: no-repeat;
-    background-color: rgb(216, 85, 129);
   }
 
   .tabs-wrap {
@@ -1046,7 +1043,8 @@ nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     gap: 18px;
   }
 
-  .product-img-wrap { height: 220px; }
+  .product-img-wrap { height: 320px; }
+  .product-img-wrap .carousel-slide { object-fit: contain; background: #f9f0f2; }
 
   /* Cart item stack nicely */
   .cart-item { flex-wrap: wrap; }
