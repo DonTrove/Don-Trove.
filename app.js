@@ -5,7 +5,7 @@
  */
 
 const CONFIG = {
-  SHEET_URL:    "https://script.google.com/macros/s/AKfycby3jaLaeRHCh0vG96Um_B81zbV9JNiKkIr4PF-swi5pL_s-qD-o4kiwXQnLjU-flwt6bQ/exec",
+  SHEET_URL:    "https://script.google.com/macros/s/AKfycbzHBSbROYklWjK302SwD56T0X89nq2POyY6ZNg6aAbZlS5DoG4Nc6-ruf0I3yCOGrbSfQ/exec",
   DELIVERY_FEE: 200,
   GIFT_WRAP:    300,
 };
@@ -507,8 +507,7 @@ function selectPayment(el, method) {
 async function placeOrder() {
   const val = id => (document.getElementById(id)?.value || "").trim();
   const senderName = val("senderName"), phone = val("phone"),
-        recipientName = val("recipientName"), address = val("address"),
-        
+        recipientName = val("recipientName"), address = val("address");
 
   if (!senderName || !phone || !recipientName || !address) {
     showToast("⚠️ Please fill in all required fields", true); return;
