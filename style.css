@@ -21,7 +21,7 @@
   --shadow-lg:    0 12px 60px rgba(46, 32, 48, 0.18);
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; }
 body {
   font-family: 'DM Sans', sans-serif;
@@ -344,6 +344,7 @@ nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   transition: opacity 0.2s, background 0.2s;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
 }
 .product-img-wrap:hover .carousel-arrow { opacity: 1; }
 .carousel-arrow:hover { background: rgba(46, 32, 48, 0.92); }
